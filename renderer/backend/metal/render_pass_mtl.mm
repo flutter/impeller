@@ -435,16 +435,8 @@ bool RenderPassMTL::EncodeCommands(Allocator& allocator,
                               ShaderStage::kFragment)) {
       return false;
     }
-    MTLIndexType index_type;
-    switch (command.index_type) {
-      case IndexType::k16bit:
-        index_type = MTLIndexTypeUInt16;
-        break;
-      case IndexType::k32bit:
-        index_type = MTLIndexTypeUInt32;
-        break;
-      case IndexType::kUnknown:
-        return false;
+    if (command.index_type == IndexType::kUnknown) {
+      return false;
     }
     auto index_buffer = command.index_buffer.buffer;
     if (!index_buffer) {
@@ -464,7 +456,7 @@ bool RenderPassMTL::EncodeCommands(Allocator& allocator,
     // Returns void. All error checking must be done by this point.
     [encoder drawIndexedPrimitives:ToMTLPrimitiveType(command.primitive_type)
                         indexCount:command.index_count
-                         indexType:index_type
+                         indexType:ToMTLIndexType(command.index_type)
                        indexBuffer:mtl_index_buffer
                  indexBufferOffset:command.index_buffer.range.offset
                      instanceCount:1u
