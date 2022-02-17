@@ -32,8 +32,7 @@ ContentContext::ContentContext(std::shared_ptr<Context> context)
       StencilAttachmentDescriptor stencil0;
       stencil0.stencil_compare = CompareFunction::kEqual;
       stencil0.depth_stencil_pass = StencilOperation::kIncrementClamp;
-      clip_pipeline_descriptor.SetStencilAttachmentDescriptors(
-          std::move(stencil0));
+      clip_pipeline_descriptor.SetStencilAttachmentDescriptors(stencil0);
       // Disable write to all color attachments.
       auto color_attachments =
           clip_pipeline_descriptor.GetColorAttachmentDescriptors();
@@ -47,26 +46,17 @@ ContentContext::ContentContext(std::shared_ptr<Context> context)
           std::make_unique<ClipPipeline>(*context_, clip_pipeline_descriptor);
     }
 
-    // Inverse clip pipeline.
+    // Clip restoration pipeline.
     {
-      auto clip_pipeline_descriptor = solid_fill_pipeline->GetDescriptor();
-      clip_pipeline_descriptor.SetLabel("Inverse Clip Pipeline");
+      auto clip_pipeline_descriptor =
+          clip_pipelines_[{}]->WaitAndGet()->GetDescriptor();
+      clip_pipeline_descriptor.SetLabel("Clip Restoration Pipeline");
       // Write to the stencil buffer.
       StencilAttachmentDescriptor stencil0;
       stencil0.stencil_compare = CompareFunction::kLess;
       stencil0.depth_stencil_pass = StencilOperation::kSetToReferenceValue;
-      clip_pipeline_descriptor.SetStencilAttachmentDescriptors(
-          std::move(stencil0));
-      // Disable write to all color attachments.
-      auto color_attachments =
-          clip_pipeline_descriptor.GetColorAttachmentDescriptors();
-      for (auto& color_attachment : color_attachments) {
-        color_attachment.second.write_mask =
-            static_cast<uint64_t>(ColorWriteMask::kNone);
-      }
-      clip_pipeline_descriptor.SetColorAttachmentDescriptors(
-          std::move(color_attachments));
-      inverse_clip_pipelines_[{}] = std::make_unique<ClipPipeline>(
+      clip_pipeline_descriptor.SetStencilAttachmentDescriptors(stencil0);
+      clip_restoration_pipelines_[{}] = std::make_unique<ClipPipeline>(
           *context_, std::move(clip_pipeline_descriptor));
     }
   } else {

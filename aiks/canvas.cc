@@ -46,8 +46,12 @@ bool Canvas::Restore() {
     FML_DCHECK(current_pass_);
   }
 
+  bool contains_clips = xformation_stack_.back().contains_clips;
   xformation_stack_.pop_back();
-  RestoreClip();
+
+  if (contains_clips) {
+    RestoreClip();
+  }
 
   return true;
 }
@@ -142,6 +146,7 @@ void Canvas::ClipPath(Path path) {
   GetCurrentPass().AddEntity(std::move(entity));
 
   ++xformation_stack_.back().stencil_depth;
+  xformation_stack_.back().contains_clips = true;
 }
 
 void Canvas::RestoreClip() {
