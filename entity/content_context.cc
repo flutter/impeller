@@ -24,30 +24,51 @@ ContentContext::ContentContext(std::shared_ptr<Context> context)
 
   // Pipelines that are variants of the base pipelines with custom descriptors.
   if (auto solid_fill_pipeline = solid_fill_pipelines_[{}]->WaitAndGet()) {
-    auto clip_pipeline_descriptor = solid_fill_pipeline->GetDescriptor();
-    clip_pipeline_descriptor.SetLabel("Clip Pipeline");
-    // Write to the stencil buffer.
-    StencilAttachmentDescriptor stencil0;
-    stencil0.stencil_compare = CompareFunction::kGreaterEqual;
-    stencil0.depth_stencil_pass = StencilOperation::kIncrementClamp;
-    clip_pipeline_descriptor.SetStencilAttachmentDescriptors(stencil0);
-    // Disable write to all color attachments.
-    auto color_attachments =
-        clip_pipeline_descriptor.GetColorAttachmentDescriptors();
-    for (auto& color_attachment : color_attachments) {
-      color_attachment.second.write_mask =
-          static_cast<uint64_t>(ColorWriteMask::kNone);
+    // Clip pipeline.
+    {
+      auto clip_pipeline_descriptor = solid_fill_pipeline->GetDescriptor();
+      clip_pipeline_descriptor.SetLabel("Clip Pipeline");
+      // Write to the stencil buffer.
+      StencilAttachmentDescriptor stencil0;
+      stencil0.stencil_compare = CompareFunction::kEqual;
+      stencil0.depth_stencil_pass = StencilOperation::kIncrementClamp;
+      clip_pipeline_descriptor.SetStencilAttachmentDescriptors(
+          std::move(stencil0));
+      // Disable write to all color attachments.
+      auto color_attachments =
+          clip_pipeline_descriptor.GetColorAttachmentDescriptors();
+      for (auto& color_attachment : color_attachments) {
+        color_attachment.second.write_mask =
+            static_cast<uint64_t>(ColorWriteMask::kNone);
+      }
+      clip_pipeline_descriptor.SetColorAttachmentDescriptors(
+          std::move(color_attachments));
+      clip_pipelines_[{}] =
+          std::make_unique<ClipPipeline>(*context_, clip_pipeline_descriptor);
     }
-    clip_pipeline_descriptor.SetColorAttachmentDescriptors(
-        std::move(color_attachments));
-    clip_pipelines_[{}] =
-        std::make_unique<ClipPipeline>(*context_, clip_pipeline_descriptor);
 
     // Inverse clip pipeline.
-    stencil0.depth_stencil_pass = StencilOperation::kDecrementClamp;
-    clip_pipeline_descriptor.SetStencilAttachmentDescriptors(stencil0);
-    inverse_clip_pipelines_[{}] = std::make_unique<ClipPipeline>(
-        *context_, std::move(clip_pipeline_descriptor));
+    {
+      auto clip_pipeline_descriptor = solid_fill_pipeline->GetDescriptor();
+      clip_pipeline_descriptor.SetLabel("Inverse Clip Pipeline");
+      // Write to the stencil buffer.
+      StencilAttachmentDescriptor stencil0;
+      stencil0.stencil_compare = CompareFunction::kLess;
+      stencil0.depth_stencil_pass = StencilOperation::kSetToReferenceValue;
+      clip_pipeline_descriptor.SetStencilAttachmentDescriptors(
+          std::move(stencil0));
+      // Disable write to all color attachments.
+      auto color_attachments =
+          clip_pipeline_descriptor.GetColorAttachmentDescriptors();
+      for (auto& color_attachment : color_attachments) {
+        color_attachment.second.write_mask =
+            static_cast<uint64_t>(ColorWriteMask::kNone);
+      }
+      clip_pipeline_descriptor.SetColorAttachmentDescriptors(
+          std::move(color_attachments));
+      inverse_clip_pipelines_[{}] = std::make_unique<ClipPipeline>(
+          *context_, std::move(clip_pipeline_descriptor));
+    }
   } else {
     return;
   }

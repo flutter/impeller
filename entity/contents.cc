@@ -16,6 +16,7 @@
 #include "impeller/renderer/surface.h"
 #include "impeller/renderer/tessellator.h"
 #include "impeller/renderer/vertex_buffer_builder.h"
+#include "impeller/renderer/vertex_buffer.h"
 
 namespace impeller {
 
@@ -394,6 +395,48 @@ bool ClipContents::Render(const ContentContext& renderer,
   cmd.stencil_reference = entity.GetStencilDepth();
   cmd.BindVertices(
       CreateSolidFillVertices(entity.GetPath(), pass.GetTransientsBuffer()));
+
+  VS::FrameInfo info;
+  // The color really doesn't matter.
+  info.color = Color::SkyBlue();
+  info.mvp = Matrix::MakeOrthographic(pass.GetRenderTargetSize());
+
+  VS::BindFrameInfo(cmd, pass.GetTransientsBuffer().EmplaceUniform(info));
+
+  pass.AddCommand(std::move(cmd));
+  return true;
+}
+
+/*******************************************************************************
+ ******* InverseClipContents
+ ******************************************************************************/
+
+InverseClipContents::InverseClipContents() = default;
+
+InverseClipContents::~InverseClipContents() = default;
+
+bool InverseClipContents::Render(const ContentContext& renderer,
+                                 const Entity& entity,
+                                 RenderPass& pass) const {
+  using VS = ClipPipeline::VertexShader;
+
+  Command cmd;
+  cmd.label = "Inverse Clip";
+  cmd.pipeline = renderer.GetInverseClipPipeline(OptionsFromPass(pass));
+  cmd.stencil_reference = entity.GetStencilDepth();
+
+  // Create a rect that covers the whole render target.
+  auto size = pass.GetRenderTargetSize();
+  VertexBufferBuilder<VS::PerVertexData> vtx_builder;
+  vtx_builder.AddVertices({
+      {Point(0.0, 0.0)},
+      {Point(size.width, 0.0)},
+      {Point(size.width, size.height)},
+      {Point(0.0, 0.0)},
+      {Point(size.width, size.height)},
+      {Point(0.0, size.height)},
+  });
+  cmd.BindVertices(vtx_builder.CreateVertexBuffer(pass.GetTransientsBuffer()));
 
   VS::FrameInfo info;
   // The color really doesn't matter.

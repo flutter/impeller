@@ -73,7 +73,6 @@ struct CanvasStackEntry {
   Matrix xformation;
   size_t stencil_depth = 0u;
   bool is_subpass = false;
-  std::vector<Path> clip_paths;
 };
 
 }  // namespace impeller

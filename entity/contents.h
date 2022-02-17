@@ -156,4 +156,20 @@ class ClipContents final : public Contents {
   FML_DISALLOW_COPY_AND_ASSIGN(ClipContents);
 };
 
+class InverseClipContents final : public Contents {
+ public:
+  InverseClipContents();
+
+  ~InverseClipContents();
+
+  // |Contents|
+  bool Render(const ContentContext& renderer,
+              const Entity& entity,
+              RenderPass& pass) const override;
+
+ private:
+
+  FML_DISALLOW_COPY_AND_ASSIGN(InverseClipContents);
+};
+
 }  // namespace impeller
