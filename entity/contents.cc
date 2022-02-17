@@ -15,8 +15,8 @@
 #include "impeller/renderer/sampler_library.h"
 #include "impeller/renderer/surface.h"
 #include "impeller/renderer/tessellator.h"
-#include "impeller/renderer/vertex_buffer_builder.h"
 #include "impeller/renderer/vertex_buffer.h"
+#include "impeller/renderer/vertex_buffer_builder.h"
 
 namespace impeller {
 
@@ -390,7 +390,7 @@ bool ClipContents::Render(const ContentContext& renderer,
   Command cmd;
   cmd.label = inverse_ ? "Inverse Clip" : "Clip";
   cmd.pipeline = inverse_
-                     ? renderer.GetInverseClipPipeline(OptionsFromPass(pass))
+                     ? renderer.GetClipRestorePipeline(OptionsFromPass(pass))
                      : renderer.GetClipPipeline(OptionsFromPass(pass));
   cmd.stencil_reference = entity.GetStencilDepth();
   cmd.BindVertices(
@@ -408,21 +408,21 @@ bool ClipContents::Render(const ContentContext& renderer,
 }
 
 /*******************************************************************************
- ******* InverseClipContents
+ ******* ClipRestoreContents
  ******************************************************************************/
 
-InverseClipContents::InverseClipContents() = default;
+ClipRestoreContents::ClipRestoreContents() = default;
 
-InverseClipContents::~InverseClipContents() = default;
+ClipRestoreContents::~ClipRestoreContents() = default;
 
-bool InverseClipContents::Render(const ContentContext& renderer,
+bool ClipRestoreContents::Render(const ContentContext& renderer,
                                  const Entity& entity,
                                  RenderPass& pass) const {
   using VS = ClipPipeline::VertexShader;
 
   Command cmd;
   cmd.label = "Inverse Clip";
-  cmd.pipeline = renderer.GetInverseClipPipeline(OptionsFromPass(pass));
+  cmd.pipeline = renderer.GetClipRestorePipeline(OptionsFromPass(pass));
   cmd.stencil_reference = entity.GetStencilDepth();
 
   // Create a rect that covers the whole render target.

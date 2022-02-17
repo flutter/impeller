@@ -91,7 +91,7 @@ class Canvas {
 
   void Save(bool create_subpass);
 
-  void ReverseClipPaths();
+  void RestoreClip();
 
   FML_DISALLOW_COPY_AND_ASSIGN(Canvas);
 };

@@ -77,7 +77,7 @@ class ContentContext {
     return GetPipeline(clip_pipelines_, opts);
   }
 
-  std::shared_ptr<Pipeline> GetInverseClipPipeline(Options opts) const {
+  std::shared_ptr<Pipeline> GetClipRestorePipeline(Options opts) const {
     return GetPipeline(inverse_clip_pipelines_, opts);
   }
 

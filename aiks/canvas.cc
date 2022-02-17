@@ -47,7 +47,7 @@ bool Canvas::Restore() {
   }
 
   xformation_stack_.pop_back();
-  ReverseClipPaths();
+  RestoreClip();
 
   return true;
 }
@@ -144,11 +144,11 @@ void Canvas::ClipPath(Path path) {
   ++xformation_stack_.back().stencil_depth;
 }
 
-void Canvas::ReverseClipPaths() {
+void Canvas::RestoreClip() {
   Entity entity;
   entity.SetTransformation(GetCurrentTransformation());
   entity.SetPath({});
-  entity.SetContents(std::make_shared<InverseClipContents>());
+  entity.SetContents(std::make_shared<ClipRestoreContents>());
   entity.SetStencilDepth(GetStencilDepth());
   entity.SetAddsToCoverage(false);
 
