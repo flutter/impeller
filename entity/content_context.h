@@ -77,6 +77,10 @@ class ContentContext {
     return GetPipeline(clip_pipelines_, opts);
   }
 
+  std::shared_ptr<Pipeline> GetInverseClipPipeline(Options opts) const {
+    return GetPipeline(inverse_clip_pipelines_, opts);
+  }
+
   std::shared_ptr<Context> GetContext() const;
 
  private:
@@ -94,6 +98,7 @@ class ContentContext {
   mutable Variants<TexturePipeline> texture_pipelines_;
   mutable Variants<SolidStrokePipeline> solid_stroke_pipelines_;
   mutable Variants<ClipPipeline> clip_pipelines_;
+  mutable Variants<ClipPipeline> inverse_clip_pipelines_;
 
   static void ApplyOptionsToDescriptor(PipelineDescriptor& desc,
                                        const Options& options) {

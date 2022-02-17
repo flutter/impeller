@@ -377,15 +377,21 @@ ClipContents::ClipContents() = default;
 
 ClipContents::~ClipContents() = default;
 
+void ClipContents::SetInverse(bool inverse) {
+  inverse_ = inverse;
+}
+
 bool ClipContents::Render(const ContentContext& renderer,
                           const Entity& entity,
                           RenderPass& pass) const {
   using VS = ClipPipeline::VertexShader;
 
   Command cmd;
-  cmd.label = "Clip";
-  cmd.pipeline = renderer.GetClipPipeline(OptionsFromPass(pass));
-  cmd.stencil_reference = entity.GetStencilDepth() + 1u;
+  cmd.label = inverse_ ? "Inverse Clip" : "Clip";
+  cmd.pipeline = inverse_
+                     ? renderer.GetInverseClipPipeline(OptionsFromPass(pass))
+                     : renderer.GetClipPipeline(OptionsFromPass(pass));
+  cmd.stencil_reference = entity.GetStencilDepth();
   cmd.BindVertices(
       CreateSolidFillVertices(entity.GetPath(), pass.GetTransientsBuffer()));
 

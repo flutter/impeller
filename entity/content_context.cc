@@ -29,7 +29,7 @@ ContentContext::ContentContext(std::shared_ptr<Context> context)
     // Write to the stencil buffer.
     StencilAttachmentDescriptor stencil0;
     stencil0.stencil_compare = CompareFunction::kGreaterEqual;
-    stencil0.depth_stencil_pass = StencilOperation::kSetToReferenceValue;
+    stencil0.depth_stencil_pass = StencilOperation::kIncrementClamp;
     clip_pipeline_descriptor.SetStencilAttachmentDescriptors(stencil0);
     // Disable write to all color attachments.
     auto color_attachments =
@@ -40,7 +40,13 @@ ContentContext::ContentContext(std::shared_ptr<Context> context)
     }
     clip_pipeline_descriptor.SetColorAttachmentDescriptors(
         std::move(color_attachments));
-    clip_pipelines_[{}] = std::make_unique<ClipPipeline>(
+    clip_pipelines_[{}] =
+        std::make_unique<ClipPipeline>(*context_, clip_pipeline_descriptor);
+
+    // Inverse clip pipeline.
+    stencil0.depth_stencil_pass = StencilOperation::kDecrementClamp;
+    clip_pipeline_descriptor.SetStencilAttachmentDescriptors(stencil0);
+    inverse_clip_pipelines_[{}] = std::make_unique<ClipPipeline>(
         *context_, std::move(clip_pipeline_descriptor));
   } else {
     return;

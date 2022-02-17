@@ -45,6 +45,9 @@ bool Canvas::Restore() {
     current_pass_ = GetCurrentPass().GetSuperpass();
     FML_DCHECK(current_pass_);
   }
+
+  ReverseClipPaths();
+
   xformation_stack_.pop_back();
   return true;
 }
@@ -129,7 +132,8 @@ void Canvas::SaveLayer(Paint paint, std::optional<Rect> bounds) {
 }
 
 void Canvas::ClipPath(Path path) {
-  IncrementStencilDepth();
+  ++xformation_stack_.back().stencil_depth;
+  xformation_stack_.back().clip_paths.push_back(path);
 
   Entity entity;
   entity.SetTransformation(GetCurrentTransformation());
@@ -139,6 +143,28 @@ void Canvas::ClipPath(Path path) {
   entity.SetAddsToCoverage(false);
 
   GetCurrentPass().AddEntity(std::move(entity));
+}
+
+void Canvas::ReverseClipPaths() {
+  auto paths = xformation_stack_.back().clip_paths;
+  while (!paths.empty()) {
+    auto path = paths.back();
+    paths.pop_back();
+
+    auto contents = std::make_shared<ClipContents>();
+    contents->SetInverse(true);
+
+    Entity entity;
+    entity.SetTransformation(GetCurrentTransformation());
+    entity.SetPath(std::move(path));
+    entity.SetContents(contents);
+    entity.SetStencilDepth(GetStencilDepth());
+    entity.SetAddsToCoverage(false);
+
+    GetCurrentPass().AddEntity(std::move(entity));
+
+    --xformation_stack_.back().stencil_depth;
+  }
 }
 
 void Canvas::DrawShadow(Path path, Color color, Scalar elevation) {}
@@ -211,10 +237,6 @@ Picture Canvas::EndRecordingAsPicture() {
 EntityPass& Canvas::GetCurrentPass() {
   FML_DCHECK(current_pass_ != nullptr);
   return *current_pass_;
-}
-
-void Canvas::IncrementStencilDepth() {
-  ++xformation_stack_.back().stencil_depth;
 }
 
 size_t Canvas::GetStencilDepth() const {

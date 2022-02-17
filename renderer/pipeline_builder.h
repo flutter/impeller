@@ -8,6 +8,7 @@
 #include "flutter/fml/macros.h"
 #include "impeller/base/base.h"
 #include "impeller/renderer/context.h"
+#include "impeller/renderer/formats.h"
 #include "impeller/renderer/pipeline_descriptor.h"
 #include "impeller/renderer/shader_library.h"
 #include "impeller/renderer/vertex_descriptor.h"

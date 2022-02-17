@@ -143,12 +143,16 @@ class ClipContents final : public Contents {
 
   ~ClipContents();
 
+  void SetInverse(bool inverse);
+
   // |Contents|
   bool Render(const ContentContext& renderer,
               const Entity& entity,
               RenderPass& pass) const override;
 
  private:
+  bool inverse_ = false;
+
   FML_DISALLOW_COPY_AND_ASSIGN(ClipContents);
 };
 
