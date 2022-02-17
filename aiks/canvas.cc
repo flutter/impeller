@@ -152,6 +152,8 @@ void Canvas::ClipPath(Path path) {
 void Canvas::RestoreClip() {
   Entity entity;
   entity.SetTransformation(GetCurrentTransformation());
+  // This path is empty because ClipRestoreContents just generates a quad that
+  // takes up the full render target.
   entity.SetPath({});
   entity.SetContents(std::make_shared<ClipRestoreContents>());
   entity.SetStencilDepth(GetStencilDepth());

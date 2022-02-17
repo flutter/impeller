@@ -23,6 +23,8 @@ ContentContext::ContentContext(std::shared_ptr<Context> context)
       std::make_unique<SolidStrokePipeline>(*context_);
 
   // Pipelines that are variants of the base pipelines with custom descriptors.
+  // TODO(98684): Rework this API to allow fetching the descriptor without
+  //              waiting for the pipeline to build.
   if (auto solid_fill_pipeline = solid_fill_pipelines_[{}]->WaitAndGet()) {
     // Clip pipeline.
     {
