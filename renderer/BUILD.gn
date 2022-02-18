@@ -117,6 +117,22 @@ impeller_component("renderer") {
   frameworks = [ "Metal.framework" ]
 }
 
+shared_library("tesspeller") {
+  sources = [
+    "formats.cc",
+    "formats.h",
+    "tessellator.cc",
+    "tessellator.h",
+    "tesspeller.cc",
+    "tesspeller.h",
+  ]
+  deps = [
+    "../geometry",
+    "//flutter/fml",
+    "//third_party/libtess2",
+  ]
+}
+
 source_set("renderer_unittests") {
   testonly = true
 
