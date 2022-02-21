@@ -51,14 +51,11 @@ bool ImGui_ImplImpeller_Init(std::shared_ptr<impeller::Context> context) {
   auto* bd = new ImGui_ImplImpeller_Data();
   io.BackendRendererUserData = reinterpret_cast<void*>(bd);
   io.BackendRendererName = "imgui_impl_impeller";
-  // TODO(bdero): Support vertex offset (for underlying draw command) and 16 bit
-  //              indices in impeller for this.
-  /*
-    io.BackendFlags |=
+  io.BackendFlags |=
       ImGuiBackendFlags_RendererHasVtxOffset;  // We can honor the
                                                // ImDrawCmd::VtxOffset field,
                                                // allowing for large meshes.
-  */
+
   bd->context = context;
 
   // Generate/upload the font atlas.
@@ -207,6 +204,7 @@ void ImGui_ImplImpeller_RenderDrawData(ImDrawData* draw_data,
         vertex_buffer.index_count = pcmd->ElemCount;
         vertex_buffer.index_type = impeller::IndexType::k16bit;
         cmd.BindVertices(vertex_buffer);
+        cmd.base_vertex = pcmd->VtxOffset;
         cmd.primitive_type = impeller::PrimitiveType::kTriangle;
 
         render_pass.AddCommand(std::move(cmd));
