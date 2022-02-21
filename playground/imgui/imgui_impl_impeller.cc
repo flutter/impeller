@@ -3,8 +3,6 @@
 #include <algorithm>
 #include <climits>
 #include <memory>
-#include <ostream>
-#include <sstream>
 #include <vector>
 
 #include "imgui_raster.frag.h"
