@@ -103,8 +103,8 @@ bool Playground::OpenPlaygroundHere(Renderer::RenderCallback render_callback) {
   ImGui::CreateContext();
   fml::ScopedCleanupClosure destroy_imgui_context(
       []() { ImGui::DestroyContext(); });
-
   ImGui::StyleColorsDark();
+  ImGui::GetIO().IniFilename = nullptr;
 
   if (::glfwInit() != GLFW_TRUE) {
     return false;
