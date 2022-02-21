@@ -1,5 +1,6 @@
 #include "imgui_impl_impeller.h"
 
+#include <algorithm>
 #include <climits>
 #include <memory>
 #include <ostream>
@@ -8,7 +9,7 @@
 
 #include "imgui_raster.frag.h"
 #include "imgui_raster.vert.h"
-#include "third_party//imgui/imgui.h"
+#include "third_party/imgui/imgui.h"
 
 #include "impeller/geometry/matrix.h"
 #include "impeller/geometry/point.h"
@@ -106,6 +107,10 @@ void ImGui_ImplImpeller_Shutdown() {
 
 void ImGui_ImplImpeller_RenderDrawData(ImDrawData* draw_data,
                                        impeller::RenderPass& render_pass) {
+  if (draw_data->CmdListsCount == 0) {
+    return;  // Nothing to render.
+  }
+
   using VS = impeller::ImguiRasterVertexShader;
   using FS = impeller::ImguiRasterFragmentShader;
 
@@ -123,12 +128,11 @@ void ImGui_ImplImpeller_RenderDrawData(ImDrawData* draw_data,
       impeller::StorageMode::kHostVisible, total_vtx_bytes + total_idx_bytes);
   buffer->SetLabel(impeller::SPrintF("ImGui vertex+index buffer"));
 
-  // TODO(bdero): Once viewport setting is supported, set the projection matrix
-  //              and viewport to respect the draw_data.Display[Pos|Size] rect.
-
   VS::UniformBuffer uniforms;
-  uniforms.mvp =
-      impeller::Matrix::MakeOrthographic(render_pass.GetRenderTargetSize());
+  uniforms.mvp = impeller::Matrix::MakeOrthographic(
+      impeller::Size(draw_data->DisplaySize.x, draw_data->DisplaySize.y));
+  uniforms.mvp = uniforms.mvp.Translate(
+      -impeller::Vector3(draw_data->DisplayPos.x, draw_data->DisplayPos.y));
 
   size_t vertex_buffer_offset = 0;
   size_t index_buffer_offset = total_vtx_bytes;
@@ -169,6 +173,13 @@ void ImGui_ImplImpeller_RenderDrawData(ImDrawData* draw_data,
                                   pcmd->ClipRect.y - draw_data->DisplayPos.y);
         impeller::IPoint clip_max(pcmd->ClipRect.z - draw_data->DisplayPos.x,
                                   pcmd->ClipRect.w - draw_data->DisplayPos.y);
+        // Ensure the scissor never goes out of bounds.
+        clip_min.x = std::clamp(
+            clip_min.x, 0ll,
+            static_cast<decltype(clip_min.x)>(draw_data->DisplaySize.x));
+        clip_min.y = std::clamp(
+            clip_min.y, 0ll,
+            static_cast<decltype(clip_min.y)>(draw_data->DisplaySize.y));
         if (clip_max.x <= clip_min.x || clip_max.y <= clip_min.y) {
           continue;  // Nothing to render.
         }
