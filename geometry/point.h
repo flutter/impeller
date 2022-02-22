@@ -52,7 +52,7 @@ struct TPoint {
   }
 
   template <class U>
-  constexpr TPoint operator+(const TSize<U>& s) {
+  constexpr TPoint operator+(const TSize<U>& s) const {
     return {x + static_cast<Type>(s.width), y + static_cast<Type>(s.height)};
   }
 
