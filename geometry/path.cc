@@ -197,6 +197,9 @@ bool Path::UpdateMoveComponentAtIndex(size_t index,
 Path::Polyline Path::CreatePolyline(
     const SmoothingApproximation& approximation) const {
   Polyline polyline;
+  // TODO(99177): Refactor this to have component polyline creation always
+  //              exclude the first point, and append the destination point for
+  //              move components. See issue for details.
   bool new_contour = true;
   auto collect_points = [&polyline,
                          &new_contour](const std::vector<Point>& collection) {
