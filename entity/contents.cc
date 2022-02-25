@@ -508,6 +508,13 @@ bool TextContents::Render(const ContentContext& renderer,
   );
 
   // Common vertex information for all glyphs.
+  // Currently, glyphs are being drawn individually. This can be batched later.
+  // But we don't want to give each glyph unique vertex information. So all
+  // glyphs are given the same vertex information in the form of a unit-sized
+  // quad. The size of the glyph is specified in uniform data and the vertex
+  // shader uses this to size the glyph correctly. The interpolated vertex
+  // information is also used in the fragment shader to sample from the glyph
+  // atlas.
   {
     VertexBufferBuilder<VS::PerVertexData> vertex_builder;
     if (!Tessellator{FillType::kPositive}.Tessellate(
