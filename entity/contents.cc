@@ -284,6 +284,7 @@ const IRect& TextureContents::GetSourceRect() const {
 
 SolidStrokeContents::SolidStrokeContents() {
   SetStrokeCap(Cap::kButt);
+  // TODO(99089): Change this to kMiter once implemented.
   SetStrokeJoin(Join::kBevel);
 }
 

@@ -129,17 +129,15 @@ class SolidStrokeContents final : public Contents {
     kBevel,
   };
 
-  typedef std::function<void(
+  using CapProc = std::function<void(
       VertexBufferBuilder<SolidStrokeVertexShader::PerVertexData>& vtx_builder,
       const Point& position,
-      const Point& normal)>
-      CapProc;
-  typedef std::function<void(
+      const Point& normal)>;
+  using JoinProc = std::function<void(
       VertexBufferBuilder<SolidStrokeVertexShader::PerVertexData>& vtx_builder,
       const Point& position,
       const Point& start_normal,
-      const Point& end_normal)>
-      JoinProc;
+      const Point& end_normal)>;
 
   SolidStrokeContents();
 
