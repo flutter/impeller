@@ -325,81 +325,62 @@ static VertexBuffer CreateSolidStrokeVertices(const Path& path,
   VertexBufferBuilder<VS::PerVertexData> vtx_builder;
   auto polyline = path.CreatePolyline();
 
-  size_t point_i = 0;
   if (polyline.points.size() < 2) {
     return {};  // Nothing to render.
   }
 
   VS::PerVertexData vtx;
 
-  // Point cursor state.
+  // Normal state.
   Point direction;
   Point normal;
   Point previous_normal;  // Used for computing joins.
 
-  auto compute_normals = [&polyline, &direction, &normal,
-                          &previous_normal](size_t point_i) {
+  auto compute_normal = [&polyline, &direction, &normal,
+                         &previous_normal](size_t point_i) {
     previous_normal = normal;
     direction =
         (polyline.points[point_i] - polyline.points[point_i - 1]).Normalize();
     normal = {-direction.y, direction.x};
   };
-  compute_normals(1);
 
-  // Contour cursor state.
-  size_t contour_i = 0;
-  size_t contour_end_point;
-  Point contour_first_normal;
-  std::tie(std::ignore, contour_end_point) =
-      polyline.GetContourPointBounds(contour_i);
+  for (size_t contour_i = 0; contour_i < polyline.contours.size();
+       contour_i++) {
+    size_t contour_start_point_i, contour_end_point_i;
+    std::tie(contour_start_point_i, contour_end_point_i) =
+        polyline.GetContourPointBounds(contour_i);
 
-  auto next_contour = [&polyline, &contour_i, &contour_end_point]() {
-    if (contour_i >= polyline.contours.size() - 1) {
-      contour_i = polyline.contours.size();
-      return;
+    if (contour_end_point_i - contour_start_point_i < 2) {
+      continue;  // This contour has no renderable content.
     }
 
-    ++contour_i;
-    std::tie(std::ignore, contour_end_point) =
-        polyline.GetContourPointBounds(contour_i);
-    return;
-  };
+    // The first point's normal is always the same as
+    compute_normal(contour_start_point_i + 1);
+    const Point contour_first_normal = normal;
 
-  while (point_i < polyline.points.size()) {
-    if (point_i > 0) {
-      compute_normals(point_i);
-
+    if (contour_i > 0) {
       // This branch only executes when we've just finished drawing a contour
       // and are switching to a new one.
       // We're drawing a triangle strip, so we need to "pick up the pen" by
       // appending transparent vertices between the end of the previous contour
       // and the beginning of the new contour.
-      vtx.vertex_position = polyline.points[point_i - 1];
+      vtx.vertex_position = polyline.points[contour_start_point_i - 1];
       vtx.vertex_normal = {};
       vtx.pen_down = 0.0;
       vtx_builder.AppendVertex(vtx);
-      vtx.vertex_position = polyline.points[point_i];
+      vtx.vertex_position = polyline.points[contour_start_point_i];
       vtx_builder.AppendVertex(vtx);
     }
 
     // Generate start cap.
     if (!polyline.contours[contour_i].is_closed) {
-      CreateCap(vtx_builder, polyline.points[point_i], -direction);
+      CreateCap(vtx_builder, polyline.points[contour_start_point_i], -normal);
     }
 
     // Generate contour geometry.
-    size_t contour_point_i = 0;
-    while (point_i < contour_end_point) {
-      if (contour_point_i > 0) {
-        if (contour_point_i > 1) {
-          // Generate join from the previous line to the current line.
-          CreateJoin(vtx_builder, polyline.points[point_i - 1], previous_normal,
-                     normal);
-        } else {
-          compute_normals(point_i);
-          contour_first_normal = normal;
-        }
-
+    for (size_t point_i = contour_start_point_i; point_i < contour_end_point_i;
+         point_i++) {
+      if (point_i > contour_start_point_i) {
         // Generate line rect.
         vtx.vertex_position = polyline.points[point_i - 1];
         vtx.pen_down = 1.0;
@@ -413,25 +394,23 @@ static VertexBuffer CreateSolidStrokeVertices(const Path& path,
         vtx.vertex_normal = -normal;
         vtx_builder.AppendVertex(vtx);
 
-        compute_normals(point_i + 1);
-      }
+        if (point_i < contour_end_point_i - 1) {
+          compute_normal(point_i + 1);
 
-      ++contour_point_i;
-      ++point_i;
+          // Generate join from the current line to the next line.
+          CreateJoin(vtx_builder, polyline.points[point_i], previous_normal,
+                     normal);
+        }
+      }
     }
 
     // Generate end cap or join.
     if (!polyline.contours[contour_i].is_closed) {
-      CreateCap(vtx_builder, polyline.points[point_i - 1], -direction);
+      CreateCap(vtx_builder, polyline.points[contour_end_point_i - 1], normal);
     } else {
-      size_t first_index = polyline.contours[contour_i].start_index;
-      Point first_point = polyline.points[first_index];
-
-      CreateJoin(vtx_builder, first_point, previous_normal,
+      CreateJoin(vtx_builder, polyline.points[contour_start_point_i], normal,
                  contour_first_normal);
     }
-
-    next_contour();
   }
 
   return vtx_builder.CreateVertexBuffer(buffer);
