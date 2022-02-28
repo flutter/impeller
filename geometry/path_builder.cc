@@ -174,8 +174,8 @@ PathBuilder& PathBuilder::AddRect(Rect rect) {
   auto br = rect.origin + Point{rect.size.width, rect.size.height};
   auto tr = rect.origin + Point{rect.size.width, 0.0};
 
-  prototype_.AddContourComponent(tl)
-      .AddLinearComponent(tl, tr)
+  MoveTo(tl);
+  prototype_.AddLinearComponent(tl, tr)
       .AddLinearComponent(tr, br)
       .AddLinearComponent(br, bl)
       .AddLinearComponent(bl, tl);
@@ -205,8 +205,7 @@ PathBuilder& PathBuilder::AddRoundedRect(Rect rect, RoundingRadii radii) {
   const auto magic_bottom_left = radii.bottom_left * kArcApproximationMagic;
   const auto magic_top_left = radii.top_left * kArcApproximationMagic;
 
-  prototype_.AddContourComponent(
-      {rect.origin.x + radii.top_left.x, rect.origin.y}, true);
+  MoveTo({rect.origin.x + radii.top_left.x, rect.origin.y});
 
   //----------------------------------------------------------------------------
   // Top line.
@@ -295,7 +294,7 @@ PathBuilder& PathBuilder::AddOval(const Rect& container) {
                    container.origin.y + (container.size.height * 0.5f)};
   const Point m = {kArcApproximationMagic * r.x, kArcApproximationMagic * r.y};
 
-  prototype_.AddContourComponent({c.x, c.y - r.y}, true);
+  MoveTo({c.x, c.y - r.y});
 
   //----------------------------------------------------------------------------
   // Top right arc.
@@ -339,6 +338,7 @@ PathBuilder& PathBuilder::AddOval(const Rect& container) {
 }
 
 PathBuilder& PathBuilder::AddLine(const Point& p1, const Point& p2) {
+  MoveTo(p1);
   prototype_.AddLinearComponent(p1, p2);
   return *this;
 }
