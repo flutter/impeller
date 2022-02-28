@@ -22,7 +22,7 @@ std::tuple<size_t, size_t> Path::Polyline::GetContourPointBounds(
   FML_DCHECK(contour_index < contours.size());
 
   const size_t start_index = contours[contour_index].start_index;
-  const size_t end_index = (contour_index == contours.size())
+  const size_t end_index = (contour_index >= contours.size() - 1)
                                ? points.size()
                                : contours[contour_index + 1].start_index;
   return std::make_tuple(start_index, end_index);
@@ -59,7 +59,8 @@ Path& Path::AddCubicComponent(Point p1, Point cp1, Point cp2, Point p2) {
 }
 
 Path& Path::AddContourComponent(Point destination, bool is_closed) {
-  if (components_.back().type == ComponentType::kContour) {
+  if (components_.size() > 0 &&
+      components_.back().type == ComponentType::kContour) {
     // Never insert contiguous contours.
     contours_.back() = ContourComponent(destination, is_closed);
   } else {
@@ -249,9 +250,9 @@ Path::Polyline Path::CreatePolyline(
           continue;
         }
         const auto& contour = contours_[component.index];
-        collect_points({contour.destination});
         polyline.contours.push_back({.start_index = polyline.points.size(),
                                      .is_closed = contour.is_closed});
+        collect_points({contour.destination});
         break;
     }
   }

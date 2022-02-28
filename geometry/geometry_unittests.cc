@@ -179,7 +179,7 @@ TEST(GeometryTest, SimplePath) {
         ASSERT_EQ(cubic.cp2, cp2);
         ASSERT_EQ(cubic.p2, p2);
       },
-      [](size_t index, const MovePathComponent& move) { ASSERT_TRUE(false); });
+      [](size_t index, const ContourComponent& move) { ASSERT_TRUE(false); });
 }
 
 TEST(GeometryTest, BoundingBoxCubic) {
@@ -638,15 +638,15 @@ TEST(GeometryTest, CubicPathComponentPolylineDoesNotIncludePointOne) {
 
 TEST(GeometryTest, PathCreatePolyLineDoesNotDuplicatePoints) {
   Path path;
-  path.AddMoveComponent({10, 10});
+  path.AddContourComponent({10, 10});
   path.AddLinearComponent({10, 10}, {20, 20});
   path.AddLinearComponent({20, 20}, {30, 30});
-  path.AddMoveComponent({40, 40});
+  path.AddContourComponent({40, 40});
   path.AddLinearComponent({40, 40}, {50, 50});
 
   auto polyline = path.CreatePolyline();
 
-  ASSERT_EQ(polyline.breaks.size(), 2u);
+  ASSERT_EQ(polyline.contours.size(), 2u);
   ASSERT_EQ(polyline.points.size(), 5u);
   ASSERT_EQ(polyline.points[0].x, 10);
   ASSERT_EQ(polyline.points[1].x, 20);

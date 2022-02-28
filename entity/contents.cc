@@ -337,7 +337,8 @@ static VertexBuffer CreateSolidStrokeVertices(const Path& path,
   Point normal;
   Point previous_normal;  // Used for computing joins.
 
-  auto compute_normals = [&](size_t point_i) {
+  auto compute_normals = [&polyline, &direction, &normal,
+                          &previous_normal](size_t point_i) {
     previous_normal = normal;
     direction =
         (polyline.points[point_i] - polyline.points[point_i - 1]).Normalize();
@@ -348,10 +349,11 @@ static VertexBuffer CreateSolidStrokeVertices(const Path& path,
   // Contour cursor state.
   size_t contour_i = 0;
   size_t contour_end_point;
+  Point contour_first_normal;
   std::tie(std::ignore, contour_end_point) =
       polyline.GetContourPointBounds(contour_i);
 
-  auto next_contour = [&]() {
+  auto next_contour = [&polyline, &contour_i, &contour_end_point]() {
     if (contour_i >= polyline.contours.size() - 1) {
       contour_i = polyline.contours.size();
       return;
@@ -395,6 +397,7 @@ static VertexBuffer CreateSolidStrokeVertices(const Path& path,
                      normal);
         } else {
           compute_normals(point_i);
+          contour_first_normal = normal;
         }
 
         // Generate line rect.
@@ -424,9 +427,10 @@ static VertexBuffer CreateSolidStrokeVertices(const Path& path,
       size_t first_index = polyline.contours[contour_i].start_index;
       Point first_point = polyline.points[first_index];
 
-      compute_normals(first_index);
-      CreateJoin(vtx_builder, first_point, normal, previous_normal);
+      CreateJoin(vtx_builder, first_point, previous_normal,
+                 contour_first_normal);
     }
+
     next_contour();
   }
 
