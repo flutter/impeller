@@ -660,5 +660,72 @@ TEST(GeometryTest, PathCreatePolyLineDoesNotDuplicatePoints) {
   ASSERT_EQ(polyline.points[4].x, 50);
 }
 
+TEST(GeometryTest, PathBuilderSetsCorrectContourPropertiesForAddCommands) {
+  // Closed shapes.
+  {
+    Path path = PathBuilder{}.AddCircle({100, 100}, 50).TakePath();
+    ContourComponent contour;
+    path.GetContourComponentAtIndex(0, contour);
+    ASSERT_POINT_NEAR(contour.destination, Point(100, 50));
+    ASSERT_TRUE(contour.is_closed);
+  }
+
+  {
+    Path path = PathBuilder{}.AddOval(Rect(100, 100, 100, 100)).TakePath();
+    ContourComponent contour;
+    path.GetContourComponentAtIndex(0, contour);
+    ASSERT_POINT_NEAR(contour.destination, Point(150, 100));
+    ASSERT_TRUE(contour.is_closed);
+  }
+
+  {
+    Path path = PathBuilder{}.AddRect(Rect(100, 100, 100, 100)).TakePath();
+    ContourComponent contour;
+    path.GetContourComponentAtIndex(0, contour);
+    ASSERT_POINT_NEAR(contour.destination, Point(100, 100));
+    ASSERT_TRUE(contour.is_closed);
+  }
+
+  {
+    Path path =
+        PathBuilder{}.AddRoundedRect(Rect(100, 100, 100, 100), 10).TakePath();
+    ContourComponent contour;
+    path.GetContourComponentAtIndex(0, contour);
+    ASSERT_POINT_NEAR(contour.destination, Point(110, 100));
+    ASSERT_TRUE(contour.is_closed);
+  }
+
+  // Open shapes.
+  {
+    Point p(100, 100);
+    Path path = PathBuilder{}.AddLine(p, {200, 100}).TakePath();
+    ContourComponent contour;
+    path.GetContourComponentAtIndex(0, contour);
+    ASSERT_POINT_NEAR(contour.destination, p);
+    ASSERT_FALSE(contour.is_closed);
+  }
+
+  {
+    Path path =
+        PathBuilder{}
+            .AddCubicCurve({100, 100}, {100, 50}, {100, 150}, {200, 100})
+            .TakePath();
+    ContourComponent contour;
+    path.GetContourComponentAtIndex(0, contour);
+    ASSERT_POINT_NEAR(contour.destination, Point(100, 100));
+    ASSERT_FALSE(contour.is_closed);
+  }
+
+  {
+    Path path = PathBuilder{}
+                    .AddQuadraticCurve({100, 100}, {100, 50}, {200, 100})
+                    .TakePath();
+    ContourComponent contour;
+    path.GetContourComponentAtIndex(0, contour);
+    ASSERT_POINT_NEAR(contour.destination, Point(100, 100));
+    ASSERT_FALSE(contour.is_closed);
+  }
+}
+
 }  // namespace testing
 }  // namespace impeller

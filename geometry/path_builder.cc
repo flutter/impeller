@@ -154,6 +154,7 @@ PathBuilder& PathBuilder::SmoothCubicCurveTo(Point controlPoint2,
 }
 
 PathBuilder& PathBuilder::AddQuadraticCurve(Point p1, Point cp, Point p2) {
+  MoveTo(p1);
   prototype_.AddQuadraticComponent(p1, cp, p2);
   return *this;
 }
@@ -162,6 +163,7 @@ PathBuilder& PathBuilder::AddCubicCurve(Point p1,
                                         Point cp1,
                                         Point cp2,
                                         Point p2) {
+  MoveTo(p1);
   prototype_.AddCubicComponent(p1, cp1, cp2, p2);
   return *this;
 }
