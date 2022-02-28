@@ -27,12 +27,14 @@ Path PathBuilder::TakePath(FillType fill) {
 PathBuilder& PathBuilder::MoveTo(Point point, bool relative) {
   current_ = relative ? current_ + point : point;
   subpath_start_ = current_;
-  prototype_.AddMoveComponent(current_);
+  prototype_.AddContourComponent(current_);
   return *this;
 }
 
 PathBuilder& PathBuilder::Close() {
   LineTo(subpath_start_);
+  prototype_.SetContourClosed(true);
+  prototype_.AddContourComponent(current_);
   return *this;
 }
 
@@ -344,8 +346,8 @@ PathBuilder& PathBuilder::AddPath(const Path& path) {
   auto cubic = [&](size_t index, const CubicPathComponent& c) {
     prototype_.AddCubicComponent(c.p1, c.cp1, c.cp2, c.p2);
   };
-  auto move = [&](size_t index, const MovePathComponent& m) {
-    prototype_.AddMoveComponent(m.destination);
+  auto move = [&](size_t index, const ContourComponent& m) {
+    prototype_.AddContourComponent(m.destination);
   };
   path.EnumerateComponents(linear, quadratic, cubic, move);
   return *this;

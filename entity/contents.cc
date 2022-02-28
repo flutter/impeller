@@ -5,6 +5,7 @@
 #include "impeller/entity/contents.h"
 
 #include <memory>
+#include <tuple>
 
 #include "flutter/fml/logging.h"
 #include "impeller/entity/content_context.h"
@@ -331,10 +332,11 @@ static VertexBuffer CreateSolidStrokeVertices(const Path& path,
 
   VS::PerVertexData vtx;
 
-  // Cursor state.
+  // Point cursor state.
   Point direction;
   Point normal;
   Point previous_normal;  // Used for computing joins.
+
   auto compute_normals = [&](size_t point_i) {
     previous_normal = normal;
     direction =
@@ -343,10 +345,23 @@ static VertexBuffer CreateSolidStrokeVertices(const Path& path,
   };
   compute_normals(1);
 
-  // Break state.
-  auto breaks_it = polyline.breaks.begin();
-  size_t break_end =
-      breaks_it != polyline.breaks.end() ? *breaks_it : polyline.points.size();
+  // Contour cursor state.
+  size_t contour_i = 0;
+  size_t contour_end_point;
+  std::tie(std::ignore, contour_end_point) =
+      polyline.GetContourPointBounds(contour_i);
+
+  auto next_contour = [&]() {
+    if (contour_i >= polyline.contours.size() - 1) {
+      contour_i = polyline.contours.size();
+      return;
+    }
+
+    ++contour_i;
+    std::tie(std::ignore, contour_end_point) =
+        polyline.GetContourPointBounds(contour_i);
+    return;
+  };
 
   while (point_i < polyline.points.size()) {
     if (point_i > 0) {
@@ -366,11 +381,13 @@ static VertexBuffer CreateSolidStrokeVertices(const Path& path,
     }
 
     // Generate start cap.
-    CreateCap(vtx_builder, polyline.points[point_i], -direction);
+    if (!polyline.contours[contour_i].is_closed) {
+      CreateCap(vtx_builder, polyline.points[point_i], -direction);
+    }
 
     // Generate contour geometry.
     size_t contour_point_i = 0;
-    while (point_i < break_end) {
+    while (point_i < contour_end_point) {
       if (contour_point_i > 0) {
         if (contour_point_i > 1) {
           // Generate join from the previous line to the current line.
@@ -400,14 +417,17 @@ static VertexBuffer CreateSolidStrokeVertices(const Path& path,
       ++point_i;
     }
 
-    // Generate end cap.
-    CreateCap(vtx_builder, polyline.points[point_i - 1], -direction);
+    // Generate end cap or join.
+    if (!polyline.contours[contour_i].is_closed) {
+      CreateCap(vtx_builder, polyline.points[point_i - 1], -direction);
+    } else {
+      size_t first_index = polyline.contours[contour_i].start_index;
+      Point first_point = polyline.points[first_index];
 
-    if (break_end < polyline.points.size()) {
-      ++breaks_it;
-      break_end = breaks_it != polyline.breaks.end() ? *breaks_it
-                                                     : polyline.points.size();
+      compute_normals(first_index);
+      CreateJoin(vtx_builder, first_point, normal, previous_normal);
     }
+    next_contour();
   }
 
   return vtx_builder.CreateVertexBuffer(buffer);
