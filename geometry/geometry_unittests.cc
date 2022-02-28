@@ -727,5 +727,40 @@ TEST(GeometryTest, PathBuilderSetsCorrectContourPropertiesForAddCommands) {
   }
 }
 
+TEST(GeometryTest, PathCreatePolylineGeneratesCorrectContourData) {
+  Path::Polyline polyline = PathBuilder{}
+                                .AddLine({100, 100}, {200, 100})
+                                .MoveTo({100, 200})
+                                .LineTo({150, 250})
+                                .LineTo({200, 200})
+                                .Close()
+                                .TakePath()
+                                .CreatePolyline();
+  ASSERT_EQ(polyline.points.size(), 6u);
+  ASSERT_EQ(polyline.contours.size(), 2u);
+  ASSERT_EQ(polyline.contours[0].is_closed, false);
+  ASSERT_EQ(polyline.contours[0].start_index, 0u);
+  ASSERT_EQ(polyline.contours[1].is_closed, true);
+  ASSERT_EQ(polyline.contours[1].start_index, 2u);
+}
+
+TEST(GeometryTest, PolylineGetContourPointBoundsReturnsCorrectRanges) {
+  Path::Polyline polyline = PathBuilder{}
+                                .AddLine({100, 100}, {200, 100})
+                                .MoveTo({100, 200})
+                                .LineTo({150, 250})
+                                .LineTo({200, 200})
+                                .Close()
+                                .TakePath()
+                                .CreatePolyline();
+  size_t a1, a2, b1, b2;
+  std::tie(a1, a2) = polyline.GetContourPointBounds(0);
+  std::tie(b1, b2) = polyline.GetContourPointBounds(1);
+  ASSERT_EQ(a1, 0u);
+  ASSERT_EQ(a2, 2u);
+  ASSERT_EQ(b1, 2u);
+  ASSERT_EQ(b2, 6u);
+}
+
 }  // namespace testing
 }  // namespace impeller
