@@ -332,14 +332,12 @@ static VertexBuffer CreateSolidStrokeVertices(const Path& path,
   VS::PerVertexData vtx;
 
   // Normal state.
-  Point direction;
   Point normal;
   Point previous_normal;  // Used for computing joins.
 
-  auto compute_normal = [&polyline, &direction, &normal,
-                         &previous_normal](size_t point_i) {
+  auto compute_normal = [&polyline, &normal, &previous_normal](size_t point_i) {
     previous_normal = normal;
-    direction =
+    Point direction =
         (polyline.points[point_i] - polyline.points[point_i - 1]).Normalize();
     normal = {-direction.y, direction.x};
   };
