@@ -499,14 +499,6 @@ TEST(GeometryTest, PointCrossProduct) {
   }
 }
 
-TEST(GeometryTest, PointLeftRight) {
-  {
-    Point p(1, 2);
-    ASSERT_POINT_NEAR(p.Left(), Point(-2, 1));
-    ASSERT_POINT_NEAR(p.Right(), Point(2, -1));
-  }
-}
-
 TEST(GeometryTest, CanConvertBetweenDegressAndRadians) {
   {
     auto deg = Degrees{90.0};

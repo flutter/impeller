@@ -465,7 +465,7 @@ void SolidStrokeContents::SetStrokeCap(Cap cap) {
         vtx.vertex_position = position;
         vtx.pen_down = 1.0;
 
-        Point forward = normal.Right();
+        Point forward(normal.y, -normal.x);
 
         vtx.vertex_normal = normal;
         vtx_builder.AppendVertex(vtx);

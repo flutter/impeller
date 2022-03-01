@@ -181,10 +181,6 @@ struct TPoint {
 
   constexpr Scalar Dot(const TPoint& p) const { return (x * p.x) + (y * p.y); }
 
-  constexpr TPoint Left() const { return {-y, x}; };
-
-  constexpr TPoint Right() const { return {y, -x}; };
-
   constexpr bool IsZero() const { return x == 0 && y == 0; }
 };
 
