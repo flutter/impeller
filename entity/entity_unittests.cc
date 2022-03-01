@@ -374,12 +374,25 @@ TEST_F(EntityTest, CubicCurveAndOverlapTest) {
   ASSERT_TRUE(OpenPlaygroundHere(entity));
 }
 
-TEST_F(EntityTest, SolidStrokeContentsSetStrokeDefaults) {
-  SolidStrokeContents stroke;
-  ASSERT_EQ(stroke.GetStrokeCap(), SolidStrokeContents::Cap::kButt);
-  ASSERT_EQ(stroke.GetStrokeJoin(), SolidStrokeContents::Join::kBevel);
-  // TODO(99089): Test that SetStroke[Cap|Join] works once there are multiple
-  // caps and joins.
+TEST_F(EntityTest, SolidStrokeContentsSetStrokeCapsAndJoins) {
+  {
+    SolidStrokeContents stroke;
+    // Defaults.
+    ASSERT_EQ(stroke.GetStrokeCap(), SolidStrokeContents::Cap::kButt);
+    ASSERT_EQ(stroke.GetStrokeJoin(), SolidStrokeContents::Join::kBevel);
+  }
+
+  {
+    SolidStrokeContents stroke;
+    stroke.SetStrokeCap(SolidStrokeContents::Cap::kSquare);
+    ASSERT_EQ(stroke.GetStrokeCap(), SolidStrokeContents::Cap::kSquare);
+  }
+
+  {
+    SolidStrokeContents stroke;
+    stroke.SetStrokeCap(SolidStrokeContents::Cap::kRound);
+    ASSERT_EQ(stroke.GetStrokeCap(), SolidStrokeContents::Cap::kRound);
+  }
 }
 
 }  // namespace testing
