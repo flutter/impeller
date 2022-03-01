@@ -439,5 +439,16 @@ TEST_F(EntityTest, SolidStrokeContentsSetStrokeCapsAndJoins) {
   }
 }
 
+TEST_F(EntityTest, SolidStrokeContentsSetMiter) {
+  SolidStrokeContents contents;
+  ASSERT_FLOAT_EQ(contents.GetStrokeMiter(), 4);
+
+  contents.SetStrokeMiter(8);
+  ASSERT_FLOAT_EQ(contents.GetStrokeMiter(), 8);
+
+  contents.SetStrokeMiter(-1);
+  ASSERT_FLOAT_EQ(contents.GetStrokeMiter(), 8);
+}
+
 }  // namespace testing
 }  // namespace impeller
