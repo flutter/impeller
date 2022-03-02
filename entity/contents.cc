@@ -489,7 +489,7 @@ SolidStrokeContents::Cap SolidStrokeContents::GetStrokeCap() {
   return cap_;
 }
 
-static Scalar CreateBevel(
+static Scalar CreateBevelAndGetDirection(
     VertexBufferBuilder<SolidStrokeVertexShader::PerVertexData>& vtx_builder,
     const Point& position,
     const Point& start_normal,
@@ -518,7 +518,7 @@ void SolidStrokeContents::SetStrokeJoin(Join join) {
       join_proc_ = [](VertexBufferBuilder<VS::PerVertexData>& vtx_builder,
                       const Point& position, const Point& start_normal,
                       const Point& end_normal, Scalar miter_limit) {
-        CreateBevel(vtx_builder, position, start_normal, end_normal);
+        CreateBevelAndGetDirection(vtx_builder, position, start_normal, end_normal);
       };
       break;
     case Join::kMiter:
@@ -532,7 +532,7 @@ void SolidStrokeContents::SetStrokeJoin(Join join) {
         }
 
         Scalar dir =
-            CreateBevel(vtx_builder, position, start_normal, end_normal);
+            CreateBevelAndGetDirection(vtx_builder, position, start_normal, end_normal);
 
         Point miter_point = (start_normal + end_normal) / 2 / alignment;
         if (miter_point.GetDistanceSquared({0, 0}) >

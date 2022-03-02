@@ -5,7 +5,6 @@
 #pragma once
 
 #include <cfloat>
-#include <limits>
 #include <valarray>
 
 #include "flutter/fml/logging.h"
@@ -15,10 +14,9 @@ namespace impeller {
 
 using Scalar = float;
 
-constexpr bool ScalarNearlyEqual(
-    Scalar x,
-    Scalar y,
-    Scalar tolerance = std::numeric_limits<Scalar>::epsilon() * (1 << 16)) {
+constexpr inline bool ScalarNearlyEqual(Scalar x,
+                                        Scalar y,
+                                        Scalar tolerance = 1e-3) {
   FML_DCHECK(tolerance >= 0);
   return std::abs(x - y) <= tolerance;
 }
