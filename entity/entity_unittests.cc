@@ -190,6 +190,19 @@ TEST_F(EntityTest, StrokeCapAndJoinTest) {
       entity.Render(context, pass);
     }
 
+    // Join::kRound demo.
+    {
+      Point off = Point(2, 1) * padding + margin;
+      Point a = IMPELLER_PLAYGROUND_POINT(off + a_def, r, Color::White());
+      Point b = IMPELLER_PLAYGROUND_POINT(off + e_def, r, Color::White());
+      Point c = IMPELLER_PLAYGROUND_POINT(off + c_def, r, Color::White());
+      entity.SetPath(
+          PathBuilder{}.MoveTo(a).LineTo(b).LineTo(c).Close().TakePath());
+      entity.SetContents(create_contents(SolidStrokeContents::Cap::kButt,
+                                         SolidStrokeContents::Join::kRound));
+      entity.Render(context, pass);
+    }
+
     return true;
   };
   ASSERT_TRUE(OpenPlaygroundHere(callback));

@@ -584,7 +584,42 @@ void SolidStrokeContents::SetStrokeJoin(Join join) {
       };
       break;
     case Join::kRound:
-      FML_DLOG(ERROR) << "Unimplemented.";
+      join_proc_ = [](VertexBufferBuilder<VS::PerVertexData>& vtx_builder,
+                      const Point& position, const Point& start_normal,
+                      const Point& end_normal, Scalar miter_limit,
+                      const SmoothingApproximation& smoothing) {
+        // 0 for no joint (straight line), 1 for max joint (180 degrees).
+        Scalar alignment = 1 - (start_normal.Dot(end_normal) + 1) / 2;
+        if (ScalarNearlyEqual(alignment, 0)) {
+          return;
+        }
+
+        Scalar dir =
+            CreateBevel(vtx_builder, position, start_normal, end_normal);
+
+        Point middle = (start_normal + end_normal).Normalize();
+        Point middle_handle = middle + Point(-middle.y, middle.x) *
+                                           PathBuilder::kArcApproximationMagic *
+                                           alignment * dir;
+        Point start_handle =
+            start_normal + Point(start_normal.y, -start_normal.x) *
+                               PathBuilder::kArcApproximationMagic * alignment *
+                               dir;
+
+        auto arc_points = CubicPathComponent(start_normal, start_handle,
+                                             middle_handle, middle)
+                              .CreatePolyline(smoothing);
+
+        SolidStrokeVertexShader::PerVertexData vtx;
+        vtx.vertex_position = position;
+        vtx.pen_down = 1.0;
+        for (const auto& point : arc_points) {
+          vtx.vertex_normal = point * dir;
+          vtx_builder.AppendVertex(vtx);
+          vtx.vertex_normal = (-point * dir).Reflect(middle);
+          vtx_builder.AppendVertex(vtx);
+        }
+      };
       break;
   }
 }
