@@ -18,7 +18,7 @@ using Scalar = float;
 constexpr bool ScalarNearlyEqual(
     Scalar x,
     Scalar y,
-    Scalar tolerance = std::numeric_limits<Scalar>::epsilon() * 8) {
+    Scalar tolerance = std::numeric_limits<Scalar>::epsilon() * (1 << 16)) {
   FML_DCHECK(tolerance >= 0);
   return std::abs(x - y) <= tolerance;
 }
