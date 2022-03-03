@@ -10,16 +10,11 @@
 
 #include "flutter/fml/macros.h"
 #include "impeller/entity/contents/contents.h"
-#include "impeller/entity/solid_stroke.vert.h"
-#include "impeller/geometry/color.h"
-#include "impeller/geometry/path_component.h"
-#include "impeller/geometry/point.h"
-#include "impeller/geometry/rect.h"
-#include "impeller/renderer/texture.h"
-#include "impeller/typographer/glyph_atlas.h"
-#include "impeller/typographer/text_frame.h"
+#include "typographer/glyph_atlas.h"
 
 namespace impeller {
+
+class GlyphAtlas;
 
 class ClipContents final : public Contents {
  public:

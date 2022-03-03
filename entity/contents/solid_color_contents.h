@@ -9,18 +9,14 @@
 #include <vector>
 
 #include "flutter/fml/macros.h"
-#include "geometry/path.h"
 #include "impeller/entity/contents/contents.h"
-#include "impeller/entity/solid_stroke.vert.h"
 #include "impeller/geometry/color.h"
-#include "impeller/geometry/path_component.h"
-#include "impeller/geometry/point.h"
-#include "impeller/geometry/rect.h"
-#include "impeller/renderer/texture.h"
-#include "impeller/typographer/glyph_atlas.h"
-#include "impeller/typographer/text_frame.h"
 
 namespace impeller {
+
+class Path;
+class HostBuffer;
+struct VertexBuffer;
 
 class SolidColorContents final : public Contents {
  public:

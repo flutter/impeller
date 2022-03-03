@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "impeller/entity/contents/content_context.h"
+#include "solid_color_contents.h"
 
+#include "impeller/entity/contents/content_context.h"
 #include "impeller/entity/entity.h"
 #include "impeller/geometry/path.h"
-#include "renderer/render_pass.h"
-#include "renderer/tessellator.h"
-#include "solid_color_contents.h"
+#include "impeller/renderer/render_pass.h"
+#include "impeller/renderer/tessellator.h"
 
 namespace impeller {
 

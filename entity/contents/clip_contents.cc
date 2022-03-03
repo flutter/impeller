@@ -9,7 +9,6 @@
 #include "impeller/entity/contents/solid_color_contents.h"
 #include "impeller/entity/entity.h"
 #include "impeller/renderer/render_pass.h"
-#include "impeller/renderer/tessellator.h"
 
 namespace impeller {
 

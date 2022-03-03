@@ -19,7 +19,6 @@
 #include "flutter/impeller/entity/solid_stroke.vert.h"
 #include "flutter/impeller/entity/texture_fill.frag.h"
 #include "flutter/impeller/entity/texture_fill.vert.h"
-#include "impeller/renderer/pipeline.h"
 
 namespace impeller {
 
