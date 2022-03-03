@@ -2,30 +2,20 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#pragma once
+#include "linear_gradient_contents.h"
 
-#include "clip_contents.h"
-
-#include <functional>
-#include <memory>
-#include <vector>
-
-#include "flutter/fml/macros.h"
-#include "impeller/entity/content_context.h"
-#include "impeller/entity/contents/contents.h"
+#include "impeller/entity/contents/clip_contents.h"
+#include "impeller/entity/contents/content_context.h"
 #include "impeller/entity/contents/solid_color_contents.h"
 #include "impeller/entity/entity.h"
-#include "impeller/entity/solid_stroke.vert.h"
-#include "impeller/geometry/color.h"
-#include "impeller/geometry/path_component.h"
-#include "impeller/geometry/point.h"
-#include "impeller/geometry/rect.h"
 #include "impeller/renderer/render_pass.h"
-#include "impeller/renderer/texture.h"
-#include "impeller/typographer/glyph_atlas.h"
-#include "impeller/typographer/text_frame.h"
+#include "impeller/renderer/tessellator.h"
 
 namespace impeller {
+
+/*******************************************************************************
+ ******* ClipContents
+ ******************************************************************************/
 
 ClipContents::ClipContents() = default;
 

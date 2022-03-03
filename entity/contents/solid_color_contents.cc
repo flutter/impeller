@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "entity/content_context.h"
+#include "impeller/entity/contents/content_context.h"
 
-#include "entity/entity.h"
-#include "geometry/path.h"
+#include "impeller/entity/entity.h"
+#include "impeller/geometry/path.h"
 #include "renderer/render_pass.h"
 #include "renderer/tessellator.h"
 #include "solid_color_contents.h"

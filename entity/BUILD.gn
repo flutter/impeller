@@ -23,8 +23,20 @@ impeller_shaders("entity_shaders") {
 
 impeller_component("entity") {
   sources = [
-    "content_context.cc",
-    "content_context.h",
+    "contents/clip_contents.cc",
+    "contents/clip_contents.h",
+    "contents/content_context.cc",
+    "contents/content_context.h",
+    "contents/contents.cc",
+    "contents/contents.h",
+    "contents/linear_gradient_contents.cc",
+    "contents/linear_gradient_contents.h",
+    "contents/solid_color_contents.cc",
+    "contents/solid_color_contents.h",
+    "contents/text_contents.cc",
+    "contents/text_contents.h",
+    "contents/texture_contents.cc",
+    "contents/texture_contents.h",
     "entity.cc",
     "entity.h",
     "entity_pass.cc",
@@ -39,7 +51,6 @@ impeller_component("entity") {
     "../image",
     "../renderer",
     "../typographer",
-    "contents",
   ]
 }
 

@@ -13,7 +13,7 @@
 namespace impeller {
 
 class ContentContext;
-class ContentContextOptions;
+struct ContentContextOptions;
 class Entity;
 class Surface;
 class RenderPass;
