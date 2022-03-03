@@ -5,6 +5,7 @@
 #include "impeller/entity/content_context.h"
 
 #include <sstream>
+#include "renderer/render_pass.h"
 
 namespace impeller {
 

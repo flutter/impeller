@@ -25,8 +25,6 @@ impeller_component("entity") {
   sources = [
     "content_context.cc",
     "content_context.h",
-    "contents.cc",
-    "contents.h",
     "entity.cc",
     "entity.h",
     "entity_pass.cc",
@@ -41,6 +39,7 @@ impeller_component("entity") {
     "../image",
     "../renderer",
     "../typographer",
+    "contents",
   ]
 }
 
