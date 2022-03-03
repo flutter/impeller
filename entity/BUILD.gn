@@ -33,6 +33,8 @@ impeller_component("entity") {
     "contents/linear_gradient_contents.h",
     "contents/solid_color_contents.cc",
     "contents/solid_color_contents.h",
+    "contents/solid_stroke_contents.cc",
+    "contents/solid_stroke_contents.h",
     "contents/text_contents.cc",
     "contents/text_contents.h",
     "contents/texture_contents.cc",
