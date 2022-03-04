@@ -1,3 +1,7 @@
+// Copyright 2013 The Flutter Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 // ignore_for_file: camel_case_types
 import 'dart:ffi' as ffi;
 import 'dart:io';
@@ -72,6 +76,8 @@ class VerticesBuilder {
   }
 }
 
+// TODO(dnfield): Figure out where to put this.
+// https://github.com/flutter/flutter/issues/99563
 final ffi.DynamicLibrary _dylib = () {
   if (Platform.isWindows) {
     return ffi.DynamicLibrary.open('tessellator.dll');
