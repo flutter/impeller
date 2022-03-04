@@ -18,6 +18,14 @@ class RenderPass;
 
 class Entity {
  public:
+  enum class BlendMode {
+    kClear,
+    kSource,
+    kDestination,
+    kSourceOver,
+    kDestinationOver,
+  };
+
   Entity();
 
   ~Entity();
