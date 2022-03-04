@@ -2,13 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "entity/contents.h"
 #include "flutter/testing/testing.h"
+#include "impeller/entity/contents/solid_color_contents.h"
+#include "impeller/entity/contents/solid_stroke_contents.h"
 #include "impeller/entity/entity.h"
 #include "impeller/entity/entity_playground.h"
 #include "impeller/geometry/path_builder.h"
 #include "impeller/playground/playground.h"
 #include "impeller/playground/widgets.h"
+#include "third_party/imgui/imgui.h"
 
 namespace impeller {
 namespace testing {
@@ -80,42 +82,125 @@ TEST_F(EntityTest, TriangleInsideASquare) {
 }
 
 TEST_F(EntityTest, StrokeCapAndJoinTest) {
-  auto callback = [&](ContentContext& context, RenderPass& pass) {
-    Entity entity;
+  const Point padding(300, 250);
+  const Point margin(140, 180);
 
-    auto create_contents = [](SolidStrokeContents::Cap cap) {
+  bool first_frame = true;
+  auto callback = [&](ContentContext& context, RenderPass& pass) {
+    if (first_frame) {
+      first_frame = false;
+      ImGui::SetNextWindowSize({300, 100});
+      ImGui::SetNextWindowPos(
+          {0 * padding.x + margin.x, 1.7f * padding.y + margin.y});
+    }
+    ImGui::Begin("Controls");
+    // Slightly above sqrt(2) by default, so that right angles are just below
+    // the limit and acute angles are over the limit (causing them to get
+    // beveled).
+    static Scalar miter_limit = 1.41421357;
+    static Scalar width = 30;
+    ImGui::SliderFloat("Miter limit", &miter_limit, 0, 30);
+    ImGui::SliderFloat("Stroke width", &width, 0, 100);
+    if (ImGui::Button("Reset")) {
+      miter_limit = 1.41421357;
+      width = 30;
+    }
+    ImGui::End();
+
+    auto create_contents = [width = width](SolidStrokeContents::Cap cap,
+                                           SolidStrokeContents::Join join) {
       auto contents = std::make_unique<SolidStrokeContents>();
       contents->SetColor(Color::Red());
-      contents->SetStrokeSize(20.0);
+      contents->SetStrokeSize(width);
       contents->SetStrokeCap(cap);
+      contents->SetStrokeJoin(join);
+      contents->SetStrokeMiter(miter_limit);
       return contents;
     };
 
-    const Point a_def(100, 100), b_def(100, 150), c_def(200, 100),
-        d_def(200, 50);
-    const Scalar r = 10;
+    Entity entity;
 
+    const Point a_def(0, 0), b_def(0, 100), c_def(150, 0), d_def(150, -100),
+        e_def(75, 75);
+    const Scalar r = 30;
+    // Cap::kButt demo.
     {
-      Point off(0, 0);
+      Point off = Point(0, 0) * padding + margin;
       Point a, b, c, d;
       std::tie(a, b) = IMPELLER_PLAYGROUND_LINE(off + a_def, off + b_def, r,
                                                 Color::Black(), Color::White());
       std::tie(c, d) = IMPELLER_PLAYGROUND_LINE(off + c_def, off + d_def, r,
                                                 Color::Black(), Color::White());
       entity.SetPath(PathBuilder{}.AddCubicCurve(a, b, d, c).TakePath());
-      entity.SetContents(create_contents(SolidStrokeContents::Cap::kButt));
+      entity.SetContents(create_contents(SolidStrokeContents::Cap::kButt,
+                                         SolidStrokeContents::Join::kBevel));
       entity.Render(context, pass);
     }
 
+    // Cap::kSquare demo.
     {
-      Point off(0, 100);
+      Point off = Point(1, 0) * padding + margin;
       Point a, b, c, d;
       std::tie(a, b) = IMPELLER_PLAYGROUND_LINE(off + a_def, off + b_def, r,
                                                 Color::Black(), Color::White());
       std::tie(c, d) = IMPELLER_PLAYGROUND_LINE(off + c_def, off + d_def, r,
                                                 Color::Black(), Color::White());
       entity.SetPath(PathBuilder{}.AddCubicCurve(a, b, d, c).TakePath());
-      entity.SetContents(create_contents(SolidStrokeContents::Cap::kSquare));
+      entity.SetContents(create_contents(SolidStrokeContents::Cap::kSquare,
+                                         SolidStrokeContents::Join::kBevel));
+      entity.Render(context, pass);
+    }
+
+    // Cap::kRound demo.
+    {
+      Point off = Point(2, 0) * padding + margin;
+      Point a, b, c, d;
+      std::tie(a, b) = IMPELLER_PLAYGROUND_LINE(off + a_def, off + b_def, r,
+                                                Color::Black(), Color::White());
+      std::tie(c, d) = IMPELLER_PLAYGROUND_LINE(off + c_def, off + d_def, r,
+                                                Color::Black(), Color::White());
+      entity.SetPath(PathBuilder{}.AddCubicCurve(a, b, d, c).TakePath());
+      entity.SetContents(create_contents(SolidStrokeContents::Cap::kRound,
+                                         SolidStrokeContents::Join::kBevel));
+      entity.Render(context, pass);
+    }
+
+    // Join::kBevel demo.
+    {
+      Point off = Point(0, 1) * padding + margin;
+      Point a = IMPELLER_PLAYGROUND_POINT(off + a_def, r, Color::White());
+      Point b = IMPELLER_PLAYGROUND_POINT(off + e_def, r, Color::White());
+      Point c = IMPELLER_PLAYGROUND_POINT(off + c_def, r, Color::White());
+      entity.SetPath(
+          PathBuilder{}.MoveTo(a).LineTo(b).LineTo(c).Close().TakePath());
+      entity.SetContents(create_contents(SolidStrokeContents::Cap::kButt,
+                                         SolidStrokeContents::Join::kBevel));
+      entity.Render(context, pass);
+    }
+
+    // Join::kMiter demo.
+    {
+      Point off = Point(1, 1) * padding + margin;
+      Point a = IMPELLER_PLAYGROUND_POINT(off + a_def, r, Color::White());
+      Point b = IMPELLER_PLAYGROUND_POINT(off + e_def, r, Color::White());
+      Point c = IMPELLER_PLAYGROUND_POINT(off + c_def, r, Color::White());
+      entity.SetPath(
+          PathBuilder{}.MoveTo(a).LineTo(b).LineTo(c).Close().TakePath());
+      entity.SetContents(create_contents(SolidStrokeContents::Cap::kButt,
+                                         SolidStrokeContents::Join::kMiter));
+      entity.Render(context, pass);
+    }
+
+    // Join::kRound demo.
+    {
+      Point off = Point(2, 1) * padding + margin;
+      Point a = IMPELLER_PLAYGROUND_POINT(off + a_def, r, Color::White());
+      Point b = IMPELLER_PLAYGROUND_POINT(off + e_def, r, Color::White());
+      Point c = IMPELLER_PLAYGROUND_POINT(off + c_def, r, Color::White());
+      entity.SetPath(
+          PathBuilder{}.MoveTo(a).LineTo(b).LineTo(c).Close().TakePath());
+      entity.SetContents(create_contents(SolidStrokeContents::Cap::kButt,
+                                         SolidStrokeContents::Join::kRound));
       entity.Render(context, pass);
     }
 
@@ -379,7 +464,7 @@ TEST_F(EntityTest, SolidStrokeContentsSetStrokeCapsAndJoins) {
     SolidStrokeContents stroke;
     // Defaults.
     ASSERT_EQ(stroke.GetStrokeCap(), SolidStrokeContents::Cap::kButt);
-    ASSERT_EQ(stroke.GetStrokeJoin(), SolidStrokeContents::Join::kBevel);
+    ASSERT_EQ(stroke.GetStrokeJoin(), SolidStrokeContents::Join::kMiter);
   }
 
   {
@@ -393,6 +478,17 @@ TEST_F(EntityTest, SolidStrokeContentsSetStrokeCapsAndJoins) {
     stroke.SetStrokeCap(SolidStrokeContents::Cap::kRound);
     ASSERT_EQ(stroke.GetStrokeCap(), SolidStrokeContents::Cap::kRound);
   }
+}
+
+TEST_F(EntityTest, SolidStrokeContentsSetMiter) {
+  SolidStrokeContents contents;
+  ASSERT_FLOAT_EQ(contents.GetStrokeMiter(), 4);
+
+  contents.SetStrokeMiter(8);
+  ASSERT_FLOAT_EQ(contents.GetStrokeMiter(), 8);
+
+  contents.SetStrokeMiter(-1);
+  ASSERT_FLOAT_EQ(contents.GetStrokeMiter(), 8);
 }
 
 }  // namespace testing

@@ -2,17 +2,28 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <limits>
 #include "impeller/geometry/geometry_unittests.h"
+#include <limits>
 #include "flutter/testing/testing.h"
 #include "impeller/geometry/path.h"
 #include "impeller/geometry/path_builder.h"
 #include "impeller/geometry/path_component.h"
 #include "impeller/geometry/point.h"
 #include "impeller/geometry/rect.h"
+#include "impeller/geometry/scalar.h"
 #include "impeller/geometry/size.h"
 
 namespace impeller {
 namespace testing {
+
+TEST(GeometryTest, ScalarNearlyEqual) {
+  ASSERT_FALSE(ScalarNearlyEqual(0.002f, 0.001f));
+  ASSERT_TRUE(ScalarNearlyEqual(0.002f, 0.001f, 0.0011f));
+  ASSERT_FALSE(ScalarNearlyEqual(0.002f, 0.001f, 0.0009f));
+  ASSERT_TRUE(
+      ScalarNearlyEqual(1.0f, 1.0f + std::numeric_limits<float>::epsilon()*4));
+}
 
 TEST(GeometryTest, RotationMatrix) {
   auto rotation = Matrix::MakeRotationZ(Radians{M_PI_4});
@@ -279,6 +290,38 @@ TEST(GeometryTest, CanPerformAlgebraicPointOps) {
   }
 }
 
+TEST(GeometryTest, CanPerformAlgebraicPointOpsWithArithmeticTypes) {
+  // LHS
+  {
+    IPoint p1(1, 2);
+    IPoint p2 = p1 * 2.0f;
+    ASSERT_EQ(p2.x, 2u);
+    ASSERT_EQ(p2.y, 4u);
+  }
+
+  {
+    IPoint p1(2, 6);
+    IPoint p2 = p1 / 2.0f;
+    ASSERT_EQ(p2.x, 1u);
+    ASSERT_EQ(p2.y, 3u);
+  }
+
+  // RHS
+  {
+    IPoint p1(1, 2);
+    IPoint p2 = 2.0f * p1;
+    ASSERT_EQ(p2.x, 2u);
+    ASSERT_EQ(p2.y, 4u);
+  }
+
+  {
+    IPoint p1(2, 6);
+    IPoint p2 = 12.0f / p1;
+    ASSERT_EQ(p2.x, 6u);
+    ASSERT_EQ(p2.y, 2u);
+  }
+}
+
 TEST(GeometryTest, PointIntegerCoercesToFloat) {
   // Integer on LHS, float on RHS
   {
@@ -496,6 +539,31 @@ TEST(GeometryTest, PointCrossProduct) {
     Point p(1, 2);
     Scalar s = p.Cross(Point(3, -4));
     ASSERT_FLOAT_EQ(s, -10);
+  }
+}
+
+TEST(GeometryTest, PointReflect) {
+  {
+    Point axis = Point(0, 1);
+    Point a(2, 3);
+    auto reflected = a.Reflect(axis);
+    auto expected = Point(2, -3);
+    ASSERT_POINT_NEAR(reflected, expected);
+  }
+
+  {
+    Point axis = Point(1, 1).Normalize();
+    Point a(1, 0);
+    auto reflected = a.Reflect(axis);
+    auto expected = Point(0, -1);
+    ASSERT_POINT_NEAR(reflected, expected);
+  }
+
+  {
+    Point axis = Point(1, 1).Normalize();
+    Point a(-1, -1);
+    auto reflected = a.Reflect(axis);
+    ASSERT_POINT_NEAR(reflected, -a);
   }
 }
 
