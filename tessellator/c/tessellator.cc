@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "tesspeller.h"
+#include "tessellator.h"
 
 #include <vector>
 
@@ -35,39 +35,6 @@ void CubicTo(PathBuilder* builder,
 
 void Close(PathBuilder* builder) {
   builder->Close();
-}
-
-void AddRect(PathBuilder* builder,
-             Scalar left,
-             Scalar top,
-             Scalar right,
-             Scalar bottom) {
-  builder->AddRect(Rect::MakeLTRB(left, top, right, bottom));
-}
-
-void AddRoundedRect(PathBuilder* builder,
-                    Scalar left,
-                    Scalar top,
-                    Scalar right,
-                    Scalar bottom,
-                    Scalar rx,
-                    Scalar ry) {
-  PathBuilder::RoundingRadii rounding_radii;
-  Point radius = Point(rx, ry);
-  rounding_radii.top_left = radius;
-  rounding_radii.bottom_left = radius;
-  rounding_radii.top_right = radius;
-  rounding_radii.bottom_right = radius;
-  builder->AddRoundedRect(Rect::MakeLTRB(left, top, right, bottom),
-                          rounding_radii);
-}
-
-void AddOval(PathBuilder* builder,
-             Scalar left,
-             Scalar top,
-             Scalar right,
-             Scalar bottom) {
-  builder->AddOval(Rect::MakeLTRB(left, top, right, bottom));
 }
 
 struct Vertices* Tessellate(PathBuilder* builder) {
