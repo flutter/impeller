@@ -153,6 +153,12 @@ class ContentContext {
         color0.src_alpha_blend_factor = BlendFactor::kSourceAlpha;
         color0.src_color_blend_factor = BlendFactor::kSourceAlpha;
         break;
+      case Entity::BlendMode::kDestinationOver:
+        color0.dst_alpha_blend_factor = BlendFactor::kDestinationAlpha;
+        color0.dst_color_blend_factor = BlendFactor::kDestinationAlpha;
+        color0.src_alpha_blend_factor = BlendFactor::kOneMinusDestinationAlpha;
+        color0.src_color_blend_factor = BlendFactor::kOneMinusDestinationAlpha;
+        break;
     }
     desc.SetColorAttachmentDescriptor(0u, std::move(color0));
   }

@@ -518,6 +518,9 @@ TEST_F(EntityTest, BlendingModeOptions) {
       case Entity::BlendMode::kSourceOver:
         blend_mode_names.push_back("SourceOver");
         blend_mode_values.push_back(Entity::BlendMode::kSourceOver);
+      case Entity::BlendMode::kDestinationOver:
+        blend_mode_names.push_back("DestinationOver");
+        blend_mode_values.push_back(Entity::BlendMode::kDestinationOver);
     };
   }
 
