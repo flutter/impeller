@@ -126,9 +126,8 @@ class ContentContext {
     desc.SetSampleCount(options.sample_count);
 
     ColorAttachmentDescriptor color0 = *desc.GetColorAttachmentDescriptor(0u);
-    color0.blending_enabled = true;
     color0.alpha_blend_op = BlendOperation::kAdd;
-    color0.alpha_blend_op = BlendOperation::kAdd;
+    color0.color_blend_op = BlendOperation::kAdd;
     switch (options.blend_mode) {
       case Entity::BlendMode::kClear:
         color0.dst_alpha_blend_factor = BlendFactor::kZero;
@@ -144,7 +143,7 @@ class ContentContext {
         break;
       case Entity::BlendMode::kDestination:
         color0.dst_alpha_blend_factor = BlendFactor::kDestinationAlpha;
-        color0.dst_color_blend_factor = BlendFactor::kDestinationAlpha;
+        color0.dst_color_blend_factor = BlendFactor::kOne;
         color0.src_alpha_blend_factor = BlendFactor::kZero;
         color0.src_color_blend_factor = BlendFactor::kZero;
         break;

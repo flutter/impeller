@@ -504,7 +504,7 @@ TEST_F(EntityTest, BlendingModeOptions) {
     const Entity::BlendMode b{};
     static_assert(
         b == Entity::BlendMode::kClear);  // Ensure the first item in the enum
-                                           // is the first item in the switch.
+                                          // is the first item in the switch.
     switch (b) {
       case Entity::BlendMode::kClear:
         blend_mode_names.push_back("Clear");
@@ -585,6 +585,9 @@ TEST_F(EntityTest, BlendingModeOptions) {
         Point(470, 190), Point(270, 390), 20, Color::White(), Color::White());
 
     bool result = true;
+    result = result && draw_rect(Rect(0, 0, pass.GetRenderTargetSize().width,
+                                      pass.GetRenderTargetSize().height),
+                                 Color(), Entity::BlendMode::kClear);
     result = result && draw_rect(Rect::MakeLTRB(a.x, a.y, b.x, b.y), color1,
                                  Entity::BlendMode::kSourceOver);
     result = result && draw_rect(Rect::MakeLTRB(c.x, c.y, d.x, d.y), color2,
