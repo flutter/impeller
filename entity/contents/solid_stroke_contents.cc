@@ -143,7 +143,7 @@ bool SolidStrokeContents::Render(const ContentContext& renderer,
                    entity.GetTransformation();
 
   VS::StrokeInfo stroke_info;
-  stroke_info.color = color_;
+  stroke_info.color = color_.Premultiply();
   stroke_info.size = stroke_size_;
 
   Command cmd;

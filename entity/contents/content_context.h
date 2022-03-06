@@ -40,7 +40,7 @@ using ClipPipeline = PipelineT<SolidFillVertexShader, SolidFillFragmentShader>;
 
 struct ContentContextOptions {
   SampleCount sample_count = SampleCount::kCount1;
-  Entity::BlendMode blend_mode = Entity::BlendMode::kSource;
+  Entity::PipelineBlendMode blend_mode = Entity::PipelineBlendMode::kSource;
 
   struct Hash {
     constexpr std::size_t operator()(const ContentContextOptions& o) const {
@@ -129,33 +129,33 @@ class ContentContext {
     color0.alpha_blend_op = BlendOperation::kAdd;
     color0.color_blend_op = BlendOperation::kAdd;
     switch (options.blend_mode) {
-      case Entity::BlendMode::kClear:
+      case Entity::PipelineBlendMode::kClear:
         color0.dst_alpha_blend_factor = BlendFactor::kZero;
         color0.dst_color_blend_factor = BlendFactor::kZero;
         color0.src_alpha_blend_factor = BlendFactor::kZero;
         color0.src_color_blend_factor = BlendFactor::kZero;
         break;
-      case Entity::BlendMode::kSource:
+      case Entity::PipelineBlendMode::kSource:
         color0.dst_alpha_blend_factor = BlendFactor::kZero;
         color0.dst_color_blend_factor = BlendFactor::kZero;
         color0.src_alpha_blend_factor = BlendFactor::kSourceAlpha;
-        color0.src_color_blend_factor = BlendFactor::kSourceAlpha;
+        color0.src_color_blend_factor = BlendFactor::kOne;
         break;
-      case Entity::BlendMode::kDestination:
+      case Entity::PipelineBlendMode::kDestination:
         color0.dst_alpha_blend_factor = BlendFactor::kDestinationAlpha;
         color0.dst_color_blend_factor = BlendFactor::kOne;
         color0.src_alpha_blend_factor = BlendFactor::kZero;
         color0.src_color_blend_factor = BlendFactor::kZero;
         break;
-      case Entity::BlendMode::kSourceOver:
+      case Entity::PipelineBlendMode::kSourceOver:
         color0.dst_alpha_blend_factor = BlendFactor::kOneMinusSourceAlpha;
         color0.dst_color_blend_factor = BlendFactor::kOneMinusSourceAlpha;
         color0.src_alpha_blend_factor = BlendFactor::kSourceAlpha;
-        color0.src_color_blend_factor = BlendFactor::kSourceAlpha;
+        color0.src_color_blend_factor = BlendFactor::kOne;
         break;
-      case Entity::BlendMode::kDestinationOver:
+      case Entity::PipelineBlendMode::kDestinationOver:
         color0.dst_alpha_blend_factor = BlendFactor::kDestinationAlpha;
-        color0.dst_color_blend_factor = BlendFactor::kDestinationAlpha;
+        color0.dst_color_blend_factor = BlendFactor::kOne;
         color0.src_alpha_blend_factor = BlendFactor::kOneMinusDestinationAlpha;
         color0.src_color_blend_factor = BlendFactor::kOneMinusDestinationAlpha;
         break;

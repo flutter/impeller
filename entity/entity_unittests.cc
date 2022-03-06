@@ -495,32 +495,34 @@ TEST_F(EntityTest, SolidStrokeContentsSetMiter) {
 
 TEST_F(EntityTest, BlendingModeOptions) {
   std::vector<const char*> blend_mode_names;
-  std::vector<Entity::BlendMode> blend_mode_values;
+  std::vector<Entity::PipelineBlendMode> blend_mode_values;
   {
     // Force an exhausiveness check with a switch. When adding blend modes,
     // update this switch with a new name/value to to make it selectable in the
     // test GUI.
 
-    const Entity::BlendMode b{};
+    const Entity::PipelineBlendMode b{};
     static_assert(
-        b == Entity::BlendMode::kClear);  // Ensure the first item in the enum
-                                          // is the first item in the switch.
+        b == Entity::PipelineBlendMode::kClear);  // Ensure the first item in
+                                                  // the switch is the first
+                                                  // item in the enum.
     switch (b) {
-      case Entity::BlendMode::kClear:
+      case Entity::PipelineBlendMode::kClear:
         blend_mode_names.push_back("Clear");
-        blend_mode_values.push_back(Entity::BlendMode::kClear);
-      case Entity::BlendMode::kSource:
+        blend_mode_values.push_back(Entity::PipelineBlendMode::kClear);
+      case Entity::PipelineBlendMode::kSource:
         blend_mode_names.push_back("Source");
-        blend_mode_values.push_back(Entity::BlendMode::kSource);
-      case Entity::BlendMode::kDestination:
+        blend_mode_values.push_back(Entity::PipelineBlendMode::kSource);
+      case Entity::PipelineBlendMode::kDestination:
         blend_mode_names.push_back("Destination");
-        blend_mode_values.push_back(Entity::BlendMode::kDestination);
-      case Entity::BlendMode::kSourceOver:
+        blend_mode_values.push_back(Entity::PipelineBlendMode::kDestination);
+      case Entity::PipelineBlendMode::kSourceOver:
         blend_mode_names.push_back("SourceOver");
-        blend_mode_values.push_back(Entity::BlendMode::kSourceOver);
-      case Entity::BlendMode::kDestinationOver:
+        blend_mode_values.push_back(Entity::PipelineBlendMode::kSourceOver);
+      case Entity::PipelineBlendMode::kDestinationOver:
         blend_mode_names.push_back("DestinationOver");
-        blend_mode_values.push_back(Entity::BlendMode::kDestinationOver);
+        blend_mode_values.push_back(
+            Entity::PipelineBlendMode::kDestinationOver);
     };
   }
 
@@ -532,8 +534,9 @@ TEST_F(EntityTest, BlendingModeOptions) {
       ImGui::SetNextWindowPos({200, 450});
     }
 
-    auto draw_rect = [&context, &pass](Rect rect, Color color,
-                                       Entity::BlendMode blend_mode) -> bool {
+    auto draw_rect = [&context, &pass](
+                         Rect rect, Color color,
+                         Entity::PipelineBlendMode blend_mode) -> bool {
       using VS = SolidFillPipeline::VertexShader;
       VertexBufferBuilder<VS::PerVertexData> vtx_builder;
       {
@@ -558,7 +561,7 @@ TEST_F(EntityTest, BlendingModeOptions) {
 
       VS::FrameInfo frame_info;
       frame_info.mvp = Matrix::MakeOrthographic(pass.GetRenderTargetSize());
-      frame_info.color = color;
+      frame_info.color = color.Premultiply();
       VS::BindFrameInfo(cmd,
                         pass.GetTransientsBuffer().EmplaceUniform(frame_info));
 
@@ -576,7 +579,8 @@ TEST_F(EntityTest, BlendingModeOptions) {
                    blend_mode_names.data(), blend_mode_names.size());
     ImGui::End();
 
-    Entity::BlendMode selected_mode = blend_mode_values[current_blend_index];
+    Entity::PipelineBlendMode selected_mode =
+        blend_mode_values[current_blend_index];
 
     Point a, b, c, d;
     std::tie(a, b) = IMPELLER_PLAYGROUND_LINE(
@@ -587,9 +591,9 @@ TEST_F(EntityTest, BlendingModeOptions) {
     bool result = true;
     result = result && draw_rect(Rect(0, 0, pass.GetRenderTargetSize().width,
                                       pass.GetRenderTargetSize().height),
-                                 Color(), Entity::BlendMode::kClear);
+                                 Color(), Entity::PipelineBlendMode::kClear);
     result = result && draw_rect(Rect::MakeLTRB(a.x, a.y, b.x, b.y), color1,
-                                 Entity::BlendMode::kSourceOver);
+                                 Entity::PipelineBlendMode::kSourceOver);
     result = result && draw_rect(Rect::MakeLTRB(c.x, c.y, d.x, d.y), color2,
                                  selected_mode);
     return result;

@@ -18,7 +18,10 @@ class RenderPass;
 
 class Entity {
  public:
-  enum class BlendMode {
+  /// All pipeline blend mode presets assume that both the source (fragment
+  /// output) and destination (first color attachment) have colors with
+  /// premultiplied alpha.
+  enum class PipelineBlendMode {
     kClear,
     kSource,
     kDestination,
