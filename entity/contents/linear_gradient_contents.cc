@@ -60,8 +60,8 @@ bool LinearGradientContents::Render(const ContentContext& renderer,
   FS::GradientInfo gradient_info;
   gradient_info.start_point = start_point_;
   gradient_info.end_point = end_point_;
-  gradient_info.start_color = colors_[0].Premultiply();
-  gradient_info.end_color = colors_[1].Premultiply();
+  gradient_info.start_color = colors_[0];
+  gradient_info.end_color = colors_[1];
 
   Command cmd;
   cmd.label = "LinearGradientFill";
