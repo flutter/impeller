@@ -44,7 +44,7 @@ TEST_F(EntityTest, ThreeStrokesInOnePath) {
   Entity entity;
   entity.SetPath(path);
   auto contents = std::make_unique<SolidStrokeContents>();
-  contents->SetColor(Color::Red());
+  contents->SetColor(Color::Red().Premultiply());
   contents->SetStrokeSize(5.0);
   entity.SetContents(std::move(contents));
   ASSERT_TRUE(OpenPlaygroundHere(entity));
@@ -74,7 +74,7 @@ TEST_F(EntityTest, TriangleInsideASquare) {
     Entity entity;
     entity.SetPath(path);
     auto contents = std::make_unique<SolidStrokeContents>();
-    contents->SetColor(Color::Red());
+    contents->SetColor(Color::Red().Premultiply());
     contents->SetStrokeSize(20.0);
     entity.SetContents(std::move(contents));
 
@@ -112,7 +112,7 @@ TEST_F(EntityTest, StrokeCapAndJoinTest) {
     auto create_contents = [width = width](SolidStrokeContents::Cap cap,
                                            SolidStrokeContents::Join join) {
       auto contents = std::make_unique<SolidStrokeContents>();
-      contents->SetColor(Color::Red());
+      contents->SetColor(Color::Red().Premultiply());
       contents->SetStrokeSize(width);
       contents->SetStrokeCap(cap);
       contents->SetStrokeJoin(join);
