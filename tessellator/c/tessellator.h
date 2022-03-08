@@ -36,7 +36,11 @@ IMPELLER_API void CubicTo(PathBuilder* builder,
 
 IMPELLER_API void Close(PathBuilder* builder);
 
-IMPELLER_API struct Vertices* Tessellate(PathBuilder* builder);
+IMPELLER_API struct Vertices* Tessellate(PathBuilder* builder,
+                                         int fill_type,
+                                         Scalar scale,
+                                         Scalar angle_tolerance,
+                                         Scalar cusp_limit);
 
 IMPELLER_API void DestroyVertices(Vertices* vertices);
 
