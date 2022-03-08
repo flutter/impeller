@@ -5,6 +5,7 @@
 import argparse
 import os
 
+
 def ContainsLicenseBlock(source_file):
   # This check is somewhat easier than in the engine because all sources need to
   # have the same license.
@@ -22,6 +23,7 @@ def ContainsLicenseBlock(source_file):
         return True
 
   return False
+
 
 def IsSourceFile(path):
   known_extensions = [
@@ -47,6 +49,7 @@ def IsSourceFile(path):
     if os.path.basename(path).endswith(extension):
       return True
   return False;
+
 
 # Checks that all source files have the same license preamble.
 def Main():
