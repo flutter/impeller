@@ -8,10 +8,12 @@
 #include <optional>
 #include <variant>
 
-#include "base/validation.h"
+#include "impeller/base/validation.h"
 #include "impeller/entity/contents/content_context.h"
 #include "impeller/entity/contents/solid_color_contents.h"
+#include "impeller/entity/contents/texture_contents.h"
 #include "impeller/entity/entity.h"
+#include "impeller/geometry/path_builder.h"
 #include "impeller/renderer/command_buffer.h"
 #include "impeller/renderer/render_pass.h"
 
@@ -21,21 +23,68 @@ FilterContents::FilterContents() = default;
 
 FilterContents::~FilterContents() = default;
 
-void FilterContents::SetTextures(InputTextures input_textures) {
+void FilterContents::SetInputTextures(InputTextures& input_textures) {
   input_textures_ = std::move(input_textures);
 }
 
-static std::optional<std::shared_ptr<Texture>> RenderDependency(
+void FilterContents::SetDestination(const Rect& destination) {
+  destination_ = destination;
+}
+
+bool FilterContents::Render(const ContentContext& renderer,
+                            const Entity& entity,
+                            RenderPass& pass) const {
+  // Run the filter.
+
+  auto maybe_texture = RenderFilterToTexture(renderer, entity, pass);
+  if (!maybe_texture.has_value()) {
+    return false;
+  }
+  auto& texture = maybe_texture.value();
+
+  // Draw the resulting texture to the given destination rect, respecting the
+  // transform and clip stack.
+
+  auto contents = std::make_shared<TextureContents>();
+  contents->SetTexture(texture);
+  contents->SetSourceRect(IRect::MakeSize(texture->GetSize()));
+  Entity e;
+  e.SetPath(PathBuilder{}.AddRect(destination_).TakePath());
+  e.SetContents(std::move(contents));
+  e.SetStencilDepth(entity.GetStencilDepth());
+  e.SetTransformation(entity.GetTransformation());
+
+  return e.Render(renderer, pass);
+}
+
+std::optional<std::shared_ptr<Texture>> FilterContents::RenderFilterToTexture(
     const ContentContext& renderer,
     const Entity& entity,
-    RenderPass& pass,
-    std::shared_ptr<FilterContents>& input) {
+    RenderPass& pass) const {
+  // Resolve filter dependencies.
+
+  std::vector<std::shared_ptr<Texture>> input_textures;
+  input_textures.reserve(input_textures_.size());
+  for (const auto& input : input_textures_) {
+    if (std::holds_alternative<std::shared_ptr<FilterContents>>(input)) {
+      auto& filter = std::get<std::shared_ptr<FilterContents>>(input);
+      auto texture = filter->RenderFilterToTexture(renderer, entity, pass);
+      if (!texture.has_value()) {
+        return std::nullopt;
+      }
+      input_textures.push_back(std::move(texture.value()));
+    } else {
+      auto& texture = std::get<std::shared_ptr<Texture>>(input);
+      input_textures.push_back(std::move(texture));
+    }
+  }
+
+  // Create a new texture
+
   auto context = renderer.GetContext();
 
-  // TODO(bdero): Use texture params for size and add optional xform input for
-  //              transform?
   auto subpass_target =
-      RenderTarget::CreateOffscreen(*context, pass.GetRenderTargetSize());
+      RenderTarget::CreateOffscreen(*context, GetOutputSize());
   auto subpass_texture = subpass_target.GetRenderTargetTexture();
   if (!subpass_texture) {
     return std::nullopt;
@@ -53,7 +102,7 @@ static std::optional<std::shared_ptr<Texture>> RenderDependency(
   }
   sub_renderpass->SetLabel("OffscreenFilterPass");
 
-  if (!input->Render(renderer, entity, *sub_renderpass)) {
+  if (!RenderFilter(input_textures, renderer, *sub_renderpass)) {
     return std::nullopt;
   }
 
@@ -68,30 +117,19 @@ static std::optional<std::shared_ptr<Texture>> RenderDependency(
   return subpass_texture;
 }
 
-bool FilterContents::Render(const ContentContext& renderer,
-                            const Entity& entity,
-                            RenderPass& pass) const {
-  std::vector<std::shared_ptr<Texture>> texture_params;
-  texture_params.reserve(input_textures_.size());
-
-  // Render input dependencies.
-  for (auto input : input_textures_) {
-    if (std::holds_alternative<std::shared_ptr<FilterContents>>(input)) {
-      auto& filter = std::get<std::shared_ptr<FilterContents>>(input);
-      auto texture = RenderDependency(renderer, entity, pass, filter);
-      if (!texture.has_value()) {
-        return false;
-      }
-      texture_params.push_back(std::move(texture.value()));
+ISize FilterContents::GetOutputSize() const {
+  if (!input_textures_.empty()) {
+    if (std::holds_alternative<std::shared_ptr<FilterContents>>(
+            input_textures_[0])) {
+      auto& filter =
+          std::get<std::shared_ptr<FilterContents>>(input_textures_[0]);
+      return filter->GetOutputSize();
     } else {
-      auto& texture = std::get<std::shared_ptr<Texture>>(input);
-      texture_params.push_back(std::move(texture));
+      auto& texture = std::get<std::shared_ptr<Texture>>(input_textures_[0]);
+      return texture->GetSize();
     }
   }
-
-  Command cmd;
-  pass.AddCommand(std::move(cmd));
-  return true;
+  return ISize::Ceil(destination_.size);
 }
 
 }  // namespace impeller
