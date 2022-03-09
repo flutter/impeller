@@ -27,7 +27,7 @@ struct SmoothingApproximation {
   /// The tolerance value in radians for calculating sharp angles.
   ///
   /// Values approaching 0.0 will provide more accurate approximation of sharp
-  /// turns. A 0.0 vlaue means angle conditions are not considered at all.
+  /// turns. A 0.0 value means angle conditions are not considered at all.
   Scalar angle_tolerance;
 
   /// An angle in radians at which to introduce bevel cuts.
