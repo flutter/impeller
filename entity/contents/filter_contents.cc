@@ -16,8 +16,22 @@
 #include "impeller/geometry/path_builder.h"
 #include "impeller/renderer/command_buffer.h"
 #include "impeller/renderer/render_pass.h"
+#include "impeller/renderer/sampler_library.h"
 
 namespace impeller {
+
+/*******************************************************************************
+ ******* FilterContents
+ ******************************************************************************/
+
+std::shared_ptr<FilterContents> FilterContents::MakeBlend(
+    Entity::BlendMode blend_mode,
+    InputTextures input_textures) {
+  auto blend = std::make_shared<BlendFilterContents>();
+  blend->SetInputTextures(input_textures);
+  blend->SetBlendMode(blend_mode);
+  return blend;
+}
 
 FilterContents::FilterContents() = default;
 
@@ -61,7 +75,7 @@ std::optional<std::shared_ptr<Texture>> FilterContents::RenderFilterToTexture(
     const ContentContext& renderer,
     const Entity& entity,
     RenderPass& pass) const {
-  // Resolve filter dependencies.
+  // Resolve all inputs as textures.
 
   std::vector<std::shared_ptr<Texture>> input_textures;
   input_textures.reserve(input_textures_.size());
@@ -79,7 +93,7 @@ std::optional<std::shared_ptr<Texture>> FilterContents::RenderFilterToTexture(
     }
   }
 
-  // Create a new texture
+  // Create a new texture and render the filter to it.
 
   auto context = renderer.GetContext();
 
@@ -130,6 +144,63 @@ ISize FilterContents::GetOutputSize() const {
     }
   }
   return ISize::Ceil(destination_.size);
+}
+
+/*******************************************************************************
+ ******* BlendFilterContents
+ ******************************************************************************/
+
+BlendFilterContents::BlendFilterContents() = default;
+
+BlendFilterContents::~BlendFilterContents() = default;
+
+void BlendFilterContents::SetBlendMode(Entity::BlendMode blend_mode) {
+  blend_mode_ = blend_mode;
+}
+
+bool BlendFilterContents::RenderFilter(
+    const std::vector<std::shared_ptr<Texture>>& input_textures,
+    const ContentContext& renderer,
+    RenderPass& pass) const {
+  auto size = pass.GetRenderTargetSize();
+
+  using VS = TexturePipeline::VertexShader;
+  using FS = TexturePipeline::FragmentShader;
+
+  auto& host_buffer = pass.GetTransientsBuffer();
+
+  VertexBufferBuilder<VS::PerVertexData> vtx_builder;
+  vtx_builder.AddVertices({
+      {Point(0, 0)},
+      {Point(size.width, 0)},
+      {Point(size.width, size.height)},
+      {Point(0, 0)},
+      {Point(size.width, size.height)},
+      {Point(0, size.height)},
+  });
+  auto vtx_buffer = vtx_builder.CreateVertexBuffer(host_buffer);
+
+  VS::FrameInfo frame_info;
+  frame_info.mvp = Matrix::MakeOrthographic(pass.GetRenderTargetSize());
+  frame_info.alpha = 1;
+  auto uniform_view = host_buffer.EmplaceUniform(frame_info);
+
+  for (const auto& texture : input_textures) {
+    Command cmd;
+    cmd.label = "Blend Filter";
+    auto options = OptionsFromPass(pass);
+    options.blend_mode = blend_mode_;
+    cmd.pipeline = renderer.GetTexturePipeline(options);
+    cmd.BindVertices(vtx_buffer);
+    VS::BindFrameInfo(cmd, uniform_view);
+    FS::BindTextureSampler(
+        cmd, texture,
+        renderer.GetContext()->GetSamplerLibrary()->GetSampler({}));
+
+    pass.AddCommand(std::move(cmd));
+  }
+
+  return true;
 }
 
 }  // namespace impeller

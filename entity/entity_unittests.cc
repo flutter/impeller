@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "entity/contents/filter_contents.h"
 #include "flutter/testing/testing.h"
 #include "impeller/entity/contents/solid_color_contents.h"
 #include "impeller/entity/contents/solid_stroke_contents.h"
@@ -521,6 +522,9 @@ TEST_F(EntityTest, BlendingModeOptions) {
       case Entity::BlendMode::kDestinationOver:
         blend_mode_names.push_back("DestinationOver");
         blend_mode_values.push_back(Entity::BlendMode::kDestinationOver);
+      case Entity::BlendMode::kPlus:
+        blend_mode_names.push_back("Plus");
+        blend_mode_values.push_back(Entity::BlendMode::kPlus);
     };
   }
 
@@ -616,9 +620,28 @@ TEST_F(EntityTest, BezierCircleScaled) {
                   .Close()
                   .TakePath();
   entity.SetPath(path);
-  entity.SetTransformation(Matrix::MakeScale({20.0, 20.0, 1.0}).Translate({-80, -15, 0}));
+  entity.SetTransformation(
+      Matrix::MakeScale({20.0, 20.0, 1.0}).Translate({-80, -15, 0}));
   entity.SetContents(SolidColorContents::Make(Color::Red()));
   ASSERT_TRUE(OpenPlaygroundHere(entity));
+}
+
+TEST_F(EntityTest, Filters) {
+  auto bridge = CreateTextureForFixture("bay_bridge.jpg");
+  auto boston = CreateTextureForFixture("boston.jpg");
+  ASSERT_TRUE(bridge && boston);
+
+  auto callback = [&](ContentContext& context, RenderPass& pass) -> bool {
+    auto blend =
+        FilterContents::MakeBlend(Entity::BlendMode::kPlus, {bridge, boston});
+    blend->SetDestination(Rect(100, 100, 300, 300));
+
+    Entity entity;
+    entity.SetPath({});
+    entity.SetContents(blend);
+    return entity.Render(context, pass);
+  };
+  ASSERT_TRUE(OpenPlaygroundHere(callback));
 }
 
 }  // namespace testing

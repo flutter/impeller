@@ -9,15 +9,24 @@
 #include <vector>
 
 #include "impeller/entity/contents/contents.h"
+#include "impeller/entity/entity.h"
 #include "impeller/renderer/formats.h"
 
 namespace impeller {
+
+/*******************************************************************************
+ ******* FilterContents
+ ******************************************************************************/
 
 class FilterContents : public Contents {
  public:
   using InputVariant =
       std::variant<std::shared_ptr<Texture>, std::shared_ptr<FilterContents>>;
   using InputTextures = std::vector<InputVariant>;
+
+  static std::shared_ptr<FilterContents> MakeBlend(
+      Entity::BlendMode blend_mode,
+      InputTextures input_textures);
 
   FilterContents();
 
@@ -41,17 +50,6 @@ class FilterContents : public Contents {
               const Entity& entity,
               RenderPass& pass) const override;
 
- private:
-  /// @brief Takes a set of zero or more input textures and writes to an output
-  ///        texture.
-  virtual bool RenderFilter(
-      const std::vector<std::shared_ptr<Texture>>& input_textures,
-      const ContentContext& renderer,
-      RenderPass& subpass) const = 0;
-
-  /// @brief Determines the size of the output texture.
-  virtual ISize GetOutputSize() const;
-
   /// @brief Renders dependency filters, creates a subpass, and calls the
   ///        `RenderFilter` defined by the subclasses.
   std::optional<std::shared_ptr<Texture>> RenderFilterToTexture(
@@ -59,10 +57,43 @@ class FilterContents : public Contents {
       const Entity& entity,
       RenderPass& pass) const;
 
+ private:
+  /// @brief Takes a set of zero or more input textures and writes to an output
+  ///        texture.
+  virtual bool RenderFilter(
+      const std::vector<std::shared_ptr<Texture>>& input_textures,
+      const ContentContext& renderer,
+      RenderPass& pass) const = 0;
+
+  /// @brief Determines the size of the output texture.
+  virtual ISize GetOutputSize() const;
+
   InputTextures input_textures_;
   Rect destination_;
 
   FML_DISALLOW_COPY_AND_ASSIGN(FilterContents);
+};
+
+/*******************************************************************************
+ ******* BlendFilterContents
+ ******************************************************************************/
+
+class BlendFilterContents : public FilterContents {
+ public:
+  BlendFilterContents();
+
+  ~BlendFilterContents();
+
+  void SetBlendMode(Entity::BlendMode blend_mode);
+
+ private:
+  bool RenderFilter(const std::vector<std::shared_ptr<Texture>>& input_textures,
+                    const ContentContext& renderer,
+                    RenderPass& pass) const override;
+
+  Entity::BlendMode blend_mode_ = Entity::BlendMode::kSourceOver;
+
+  FML_DISALLOW_COPY_AND_ASSIGN(BlendFilterContents);
 };
 
 }  // namespace impeller

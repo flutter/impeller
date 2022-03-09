@@ -27,6 +27,7 @@ class Entity {
     kDestination,
     kSourceOver,
     kDestinationOver,
+    kPlus,
   };
 
   Entity();
