@@ -634,7 +634,6 @@ TEST_F(EntityTest, Filters) {
   auto callback = [&](ContentContext& context, RenderPass& pass) -> bool {
     auto blend =
         FilterContents::MakeBlend(Entity::BlendMode::kPlus, {bridge, boston});
-    blend->SetDestination(Rect(100, 100, 300, 300));
 
     Entity entity;
     entity.SetPath({});

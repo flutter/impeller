@@ -40,11 +40,6 @@ class FilterContents : public Contents {
   ///        particular filter's implementation.
   void SetInputTextures(InputTextures& input_textures);
 
-  /// @brief Set the render target destination rect for rendering this filter.
-  ///        For chained filters, this is only used for the last filter in the
-  ///        chain.
-  void SetDestination(const Rect& destination);
-
   // |Contents|
   bool Render(const ContentContext& renderer,
               const Entity& entity,

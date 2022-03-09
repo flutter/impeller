@@ -41,10 +41,6 @@ void FilterContents::SetInputTextures(InputTextures& input_textures) {
   input_textures_ = std::move(input_textures);
 }
 
-void FilterContents::SetDestination(const Rect& destination) {
-  destination_ = destination;
-}
-
 bool FilterContents::Render(const ContentContext& renderer,
                             const Entity& entity,
                             RenderPass& pass) const {
@@ -62,19 +58,19 @@ bool FilterContents::Render(const ContentContext& renderer,
   auto contents = std::make_shared<TextureContents>();
   contents->SetTexture(texture);
   contents->SetSourceRect(IRect::MakeSize(texture->GetSize()));
-  Entity e;
-  e.SetPath(PathBuilder{}.AddRect(destination_).TakePath());
-  e.SetContents(std::move(contents));
-  e.SetStencilDepth(entity.GetStencilDepth());
-  e.SetTransformation(entity.GetTransformation());
 
-  return e.Render(renderer, pass);
+  return contents->Render(renderer, entity, pass);
 }
 
 std::optional<std::shared_ptr<Texture>> FilterContents::RenderFilterToTexture(
     const ContentContext& renderer,
     const Entity& entity,
     RenderPass& pass) const {
+  auto output_size = GetOutputSize();
+  if (output_size.IsZero()) {
+    return std::nullopt;
+  }
+
   // Resolve all inputs as textures.
 
   std::vector<std::shared_ptr<Texture>> input_textures;
@@ -97,8 +93,7 @@ std::optional<std::shared_ptr<Texture>> FilterContents::RenderFilterToTexture(
 
   auto context = renderer.GetContext();
 
-  auto subpass_target =
-      RenderTarget::CreateOffscreen(*context, GetOutputSize());
+  auto subpass_target = RenderTarget::CreateOffscreen(*context, output_size);
   auto subpass_texture = subpass_target.GetRenderTargetTexture();
   if (!subpass_texture) {
     return std::nullopt;
@@ -143,7 +138,7 @@ ISize FilterContents::GetOutputSize() const {
       return texture->GetSize();
     }
   }
-  return ISize::Ceil(destination_.size);
+  return {0, 0};
 }
 
 /*******************************************************************************
