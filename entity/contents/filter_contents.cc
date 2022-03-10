@@ -8,6 +8,7 @@
 #include <optional>
 #include <variant>
 
+#include "flutter/fml/logging.h"
 #include "impeller/base/validation.h"
 #include "impeller/entity/contents/content_context.h"
 #include "impeller/entity/contents/solid_color_contents.h"
@@ -37,7 +38,7 @@ FilterContents::FilterContents() = default;
 
 FilterContents::~FilterContents() = default;
 
-void FilterContents::SetInputTextures(InputTextures& input_textures) {
+void FilterContents::SetInputTextures(InputTextures input_textures) {
   input_textures_ = std::move(input_textures);
 }
 
@@ -76,16 +77,17 @@ std::optional<std::shared_ptr<Texture>> FilterContents::RenderFilterToTexture(
   std::vector<std::shared_ptr<Texture>> input_textures;
   input_textures.reserve(input_textures_.size());
   for (const auto& input : input_textures_) {
-    if (std::holds_alternative<std::shared_ptr<FilterContents>>(input)) {
-      auto& filter = std::get<std::shared_ptr<FilterContents>>(input);
-      auto texture = filter->RenderFilterToTexture(renderer, entity, pass);
+    if (auto filter = std::get_if<std::shared_ptr<FilterContents>>(&input)) {
+      auto texture =
+          filter->get()->RenderFilterToTexture(renderer, entity, pass);
       if (!texture.has_value()) {
         return std::nullopt;
       }
       input_textures.push_back(std::move(texture.value()));
+    } else if (auto texture = std::get_if<std::shared_ptr<Texture>>(&input)) {
+      input_textures.push_back(*texture);
     } else {
-      auto& texture = std::get<std::shared_ptr<Texture>>(input);
-      input_textures.push_back(std::move(texture));
+      FML_UNREACHABLE();
     }
   }
 
@@ -127,18 +129,21 @@ std::optional<std::shared_ptr<Texture>> FilterContents::RenderFilterToTexture(
 }
 
 ISize FilterContents::GetOutputSize() const {
-  if (!input_textures_.empty()) {
-    if (std::holds_alternative<std::shared_ptr<FilterContents>>(
-            input_textures_[0])) {
-      auto& filter =
-          std::get<std::shared_ptr<FilterContents>>(input_textures_[0]);
-      return filter->GetOutputSize();
-    } else {
-      auto& texture = std::get<std::shared_ptr<Texture>>(input_textures_[0]);
-      return texture->GetSize();
-    }
+  if (input_textures_.empty()) {
+    return {};
   }
-  return {0, 0};
+
+  if (auto filter =
+          std::get_if<std::shared_ptr<FilterContents>>(&input_textures_[0])) {
+    return filter->get()->GetOutputSize();
+  }
+
+  if (auto texture =
+          std::get_if<std::shared_ptr<Texture>>(&input_textures_[0])) {
+    return texture->get()->GetSize();
+  }
+
+  FML_UNREACHABLE();
 }
 
 /*******************************************************************************
@@ -176,21 +181,20 @@ bool BlendFilterContents::RenderFilter(
   VS::FrameInfo frame_info;
   frame_info.mvp = Matrix::MakeOrthographic(ISize(1, 1));
   frame_info.alpha = 1;
+
   auto uniform_view = host_buffer.EmplaceUniform(frame_info);
+  auto sampler = renderer.GetContext()->GetSamplerLibrary()->GetSampler({});
 
+  Command cmd;
+  cmd.label = "Blend Filter";
+  auto options = OptionsFromPass(pass);
+  options.blend_mode = blend_mode_;
+  cmd.pipeline = renderer.GetTexturePipeline(options);
+  cmd.BindVertices(vtx_buffer);
+  VS::BindFrameInfo(cmd, uniform_view);
   for (const auto& texture : input_textures) {
-    Command cmd;
-    cmd.label = "Blend Filter";
-    auto options = OptionsFromPass(pass);
-    options.blend_mode = blend_mode_;
-    cmd.pipeline = renderer.GetTexturePipeline(options);
-    cmd.BindVertices(vtx_buffer);
-    VS::BindFrameInfo(cmd, uniform_view);
-    FS::BindTextureSampler(
-        cmd, texture,
-        renderer.GetContext()->GetSamplerLibrary()->GetSampler({}));
-
-    pass.AddCommand(std::move(cmd));
+    FS::BindTextureSampler(cmd, texture, sampler);
+    pass.AddCommand(cmd);
   }
 
   return true;

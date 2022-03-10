@@ -30,7 +30,7 @@ class FilterContents : public Contents {
 
   FilterContents();
 
-  ~FilterContents();
+  ~FilterContents() override;
 
   /// @brief The input texture sources for this filter. All texture sources are
   ///        expected to have or produce premultiplied alpha colors.
@@ -38,7 +38,7 @@ class FilterContents : public Contents {
   ///
   ///        The number of required or optional textures depends on the
   ///        particular filter's implementation.
-  void SetInputTextures(InputTextures& input_textures);
+  void SetInputTextures(InputTextures input_textures);
 
   // |Contents|
   bool Render(const ContentContext& renderer,
@@ -77,7 +77,7 @@ class BlendFilterContents : public FilterContents {
  public:
   BlendFilterContents();
 
-  ~BlendFilterContents();
+  ~BlendFilterContents() override;
 
   void SetBlendMode(Entity::BlendMode blend_mode);
 
