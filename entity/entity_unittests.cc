@@ -629,15 +629,21 @@ TEST_F(EntityTest, BezierCircleScaled) {
 TEST_F(EntityTest, Filters) {
   auto bridge = CreateTextureForFixture("bay_bridge.jpg");
   auto boston = CreateTextureForFixture("boston.jpg");
-  ASSERT_TRUE(bridge && boston);
+  auto kalimba = CreateTextureForFixture("kalimba.jpg");
+  ASSERT_TRUE(bridge && boston && kalimba);
 
   auto callback = [&](ContentContext& context, RenderPass& pass) -> bool {
-    auto blend =
-        FilterContents::MakeBlend(Entity::BlendMode::kPlus, {bridge, boston});
+    // Draws kalimba and overwrites it with boston.
+    auto blend0 = FilterContents::MakeBlend(
+        Entity::BlendMode::kSourceOver, {kalimba, boston});
+
+    // Adds bridge*3 to boston.
+    auto blend1 = FilterContents::MakeBlend(
+        Entity::BlendMode::kPlus, {bridge, bridge, blend0, bridge});
 
     Entity entity;
     entity.SetPath(PathBuilder{}.AddRect({100, 100, 300, 300}).TakePath());
-    entity.SetContents(blend);
+    entity.SetContents(blend1);
     return entity.Render(context, pass);
   };
   ASSERT_TRUE(OpenPlaygroundHere(callback));
