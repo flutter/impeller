@@ -505,6 +505,12 @@ bool RenderPassMTL::AddCommand(Command command) {
     }
   }
 
+  if (command.index_count == 0u) {
+    // Essentially a no-op. Don't record the command but this is not necessary
+    // an error either.
+    return true;
+  }
+
   commands_.emplace_back(std::move(command));
   return true;
 }
