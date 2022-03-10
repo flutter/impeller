@@ -397,7 +397,6 @@ bool RenderPassMTL::EncodeCommands(Allocator& allocator,
   fml::closure pop_debug_marker = [encoder]() { [encoder popDebugGroup]; };
   for (const auto& command : commands_) {
     if (command.index_count == 0u) {
-      VALIDATION_LOG << "Zero index count in render pass command.";
       continue;
     }
 
