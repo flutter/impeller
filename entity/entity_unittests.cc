@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "entity/contents/filter_contents.h"
 #include "flutter/testing/testing.h"
+#include "impeller/entity/contents/filter_contents.h"
 #include "impeller/entity/contents/solid_color_contents.h"
 #include "impeller/entity/contents/solid_stroke_contents.h"
 #include "impeller/entity/entity.h"
@@ -636,7 +636,7 @@ TEST_F(EntityTest, Filters) {
         FilterContents::MakeBlend(Entity::BlendMode::kPlus, {bridge, boston});
 
     Entity entity;
-    entity.SetPath({});
+    entity.SetPath(PathBuilder{}.AddRect({100, 100, 300, 300}).TakePath());
     entity.SetContents(blend);
     return entity.Render(context, pass);
   };

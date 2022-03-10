@@ -157,8 +157,6 @@ bool BlendFilterContents::RenderFilter(
     const std::vector<std::shared_ptr<Texture>>& input_textures,
     const ContentContext& renderer,
     RenderPass& pass) const {
-  auto size = pass.GetRenderTargetSize();
-
   using VS = TexturePipeline::VertexShader;
   using FS = TexturePipeline::FragmentShader;
 
@@ -166,17 +164,17 @@ bool BlendFilterContents::RenderFilter(
 
   VertexBufferBuilder<VS::PerVertexData> vtx_builder;
   vtx_builder.AddVertices({
-      {Point(0, 0)},
-      {Point(size.width, 0)},
-      {Point(size.width, size.height)},
-      {Point(0, 0)},
-      {Point(size.width, size.height)},
-      {Point(0, size.height)},
+      {Point(0, 0), Point(0, 0)},
+      {Point(1, 0), Point(1, 0)},
+      {Point(1, 1), Point(1, 1)},
+      {Point(0, 0), Point(0, 0)},
+      {Point(1, 1), Point(1, 1)},
+      {Point(0, 1), Point(0, 1)},
   });
   auto vtx_buffer = vtx_builder.CreateVertexBuffer(host_buffer);
 
   VS::FrameInfo frame_info;
-  frame_info.mvp = Matrix::MakeOrthographic(pass.GetRenderTargetSize());
+  frame_info.mvp = Matrix::MakeOrthographic(ISize(1, 1));
   frame_info.alpha = 1;
   auto uniform_view = host_buffer.EmplaceUniform(frame_info);
 
