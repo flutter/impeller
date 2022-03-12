@@ -9,7 +9,6 @@
 #include "impeller/geometry/path_builder.h"
 #include "impeller/typographer/backends/skia/text_frame_skia.h"
 #include "third_party/skia/include/core/SkColor.h"
-#include "third_party/skia/include/core/SkShader.h"
 
 namespace impeller {
 
