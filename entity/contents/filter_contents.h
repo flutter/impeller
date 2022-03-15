@@ -14,6 +14,8 @@
 
 namespace impeller {
 
+class Pipeline;
+
 /*******************************************************************************
  ******* FilterContents
  ******************************************************************************/
@@ -82,11 +84,16 @@ class BlendFilterContents : public FilterContents {
   void SetBlendMode(Entity::BlendMode blend_mode);
 
  private:
+  using GetPipelineProc =
+      std::function<std::shared_ptr<Pipeline>(const ContentContext& renderer,
+                                              ContentContextOptions& options)>;
+
   bool RenderFilter(const std::vector<std::shared_ptr<Texture>>& input_textures,
                     const ContentContext& renderer,
                     RenderPass& pass) const override;
 
-  Entity::BlendMode blend_mode_ = Entity::BlendMode::kSourceOver;
+  Entity::BlendMode blend_mode_;
+  GetPipelineProc pipeline_proc_;
 
   FML_DISALLOW_COPY_AND_ASSIGN(BlendFilterContents);
 };

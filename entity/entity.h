@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <variant>
 #include "impeller/entity/contents/contents.h"
 #include "impeller/geometry/color.h"
 #include "impeller/geometry/matrix.h"
@@ -18,10 +19,9 @@ class RenderPass;
 
 class Entity {
  public:
-  /// All pipeline blend mode presets assume that both the source (fragment
-  /// output) and destination (first color attachment) have colors with
-  /// premultiplied alpha.
-  enum class BlendMode {
+  /// Basic blends are blends which can be performed using the standard pipeline
+  /// blend equations.
+  enum class BasicBlendMode {
     kClear,
     kSource,
     kDestination,
@@ -37,6 +37,17 @@ class Entity {
     kPlus,
     kModulate,
   };
+
+  /// Advanced blends are blends which require special fragment shaders or API
+  /// extensions and cannot be performed using the standard pipeline blend
+  /// equations.
+  enum class AdvancedBlendMode {
+    kScreen,
+  };
+
+  /// All blend modes assume that both the source (fragment output) and
+  /// destination (first color attachment) have colors with premultiplied alpha.
+  using BlendMode = std::variant<BasicBlendMode, AdvancedBlendMode>;
 
   Entity();
 

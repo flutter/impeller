@@ -496,59 +496,59 @@ TEST_F(EntityTest, SolidStrokeContentsSetMiter) {
 
 TEST_F(EntityTest, BlendingModeOptions) {
   std::vector<const char*> blend_mode_names;
-  std::vector<Entity::BlendMode> blend_mode_values;
+  std::vector<Entity::BasicBlendMode> blend_mode_values;
   {
     // Force an exhausiveness check with a switch. When adding blend modes,
     // update this switch with a new name/value to to make it selectable in the
     // test GUI.
 
-    const Entity::BlendMode b{};
-    static_assert(b == Entity::BlendMode::kClear);  // Ensure the first item in
+    const Entity::BasicBlendMode b{};
+    static_assert(b == Entity::BasicBlendMode::kClear);  // Ensure the first item in
                                                     // the switch is the first
                                                     // item in the enum.
     switch (b) {
-      case Entity::BlendMode::kClear:
+      case Entity::BasicBlendMode::kClear:
         blend_mode_names.push_back("Clear");
-        blend_mode_values.push_back(Entity::BlendMode::kClear);
-      case Entity::BlendMode::kSource:
+        blend_mode_values.push_back(Entity::BasicBlendMode::kClear);
+      case Entity::BasicBlendMode::kSource:
         blend_mode_names.push_back("Source");
-        blend_mode_values.push_back(Entity::BlendMode::kSource);
-      case Entity::BlendMode::kDestination:
+        blend_mode_values.push_back(Entity::BasicBlendMode::kSource);
+      case Entity::BasicBlendMode::kDestination:
         blend_mode_names.push_back("Destination");
-        blend_mode_values.push_back(Entity::BlendMode::kDestination);
-      case Entity::BlendMode::kSourceOver:
+        blend_mode_values.push_back(Entity::BasicBlendMode::kDestination);
+      case Entity::BasicBlendMode::kSourceOver:
         blend_mode_names.push_back("SourceOver");
-        blend_mode_values.push_back(Entity::BlendMode::kSourceOver);
-      case Entity::BlendMode::kDestinationOver:
+        blend_mode_values.push_back(Entity::BasicBlendMode::kSourceOver);
+      case Entity::BasicBlendMode::kDestinationOver:
         blend_mode_names.push_back("DestinationOver");
-        blend_mode_values.push_back(Entity::BlendMode::kDestinationOver);
-      case Entity::BlendMode::kSourceIn:
+        blend_mode_values.push_back(Entity::BasicBlendMode::kDestinationOver);
+      case Entity::BasicBlendMode::kSourceIn:
         blend_mode_names.push_back("SourceIn");
-        blend_mode_values.push_back(Entity::BlendMode::kSourceIn);
-      case Entity::BlendMode::kDestinationIn:
+        blend_mode_values.push_back(Entity::BasicBlendMode::kSourceIn);
+      case Entity::BasicBlendMode::kDestinationIn:
         blend_mode_names.push_back("DestinationIn");
-        blend_mode_values.push_back(Entity::BlendMode::kDestinationIn);
-      case Entity::BlendMode::kSourceOut:
+        blend_mode_values.push_back(Entity::BasicBlendMode::kDestinationIn);
+      case Entity::BasicBlendMode::kSourceOut:
         blend_mode_names.push_back("SourceOut");
-        blend_mode_values.push_back(Entity::BlendMode::kSourceOut);
-      case Entity::BlendMode::kDestinationOut:
+        blend_mode_values.push_back(Entity::BasicBlendMode::kSourceOut);
+      case Entity::BasicBlendMode::kDestinationOut:
         blend_mode_names.push_back("DestinationOut");
-        blend_mode_values.push_back(Entity::BlendMode::kDestinationOut);
-      case Entity::BlendMode::kSourceATop:
+        blend_mode_values.push_back(Entity::BasicBlendMode::kDestinationOut);
+      case Entity::BasicBlendMode::kSourceATop:
         blend_mode_names.push_back("SourceATop");
-        blend_mode_values.push_back(Entity::BlendMode::kSourceATop);
-      case Entity::BlendMode::kDestinationATop:
+        blend_mode_values.push_back(Entity::BasicBlendMode::kSourceATop);
+      case Entity::BasicBlendMode::kDestinationATop:
         blend_mode_names.push_back("DestinationATop");
-        blend_mode_values.push_back(Entity::BlendMode::kDestinationATop);
-      case Entity::BlendMode::kXor:
+        blend_mode_values.push_back(Entity::BasicBlendMode::kDestinationATop);
+      case Entity::BasicBlendMode::kXor:
         blend_mode_names.push_back("Xor");
-        blend_mode_values.push_back(Entity::BlendMode::kXor);
-      case Entity::BlendMode::kPlus:
+        blend_mode_values.push_back(Entity::BasicBlendMode::kXor);
+      case Entity::BasicBlendMode::kPlus:
         blend_mode_names.push_back("Plus");
-        blend_mode_values.push_back(Entity::BlendMode::kPlus);
-      case Entity::BlendMode::kModulate:
+        blend_mode_values.push_back(Entity::BasicBlendMode::kPlus);
+      case Entity::BasicBlendMode::kModulate:
         blend_mode_names.push_back("Modulate");
-        blend_mode_values.push_back(Entity::BlendMode::kModulate);
+        blend_mode_values.push_back(Entity::BasicBlendMode::kModulate);
     };
   }
 
@@ -561,7 +561,7 @@ TEST_F(EntityTest, BlendingModeOptions) {
     }
 
     auto draw_rect = [&context, &pass](Rect rect, Color color,
-                                       Entity::BlendMode blend_mode) -> bool {
+                                       Entity::BasicBlendMode blend_mode) -> bool {
       using VS = SolidFillPipeline::VertexShader;
       VertexBufferBuilder<VS::PerVertexData> vtx_builder;
       {
@@ -604,7 +604,7 @@ TEST_F(EntityTest, BlendingModeOptions) {
                    blend_mode_names.data(), blend_mode_names.size());
     ImGui::End();
 
-    Entity::BlendMode selected_mode = blend_mode_values[current_blend_index];
+    Entity::BasicBlendMode selected_mode = blend_mode_values[current_blend_index];
 
     Point a, b, c, d;
     std::tie(a, b) = IMPELLER_PLAYGROUND_LINE(
@@ -615,9 +615,9 @@ TEST_F(EntityTest, BlendingModeOptions) {
     bool result = true;
     result = result && draw_rect(Rect(0, 0, pass.GetRenderTargetSize().width,
                                       pass.GetRenderTargetSize().height),
-                                 Color(), Entity::BlendMode::kClear);
+                                 Color(), Entity::BasicBlendMode::kClear);
     result = result && draw_rect(Rect::MakeLTRB(a.x, a.y, b.x, b.y), color1,
-                                 Entity::BlendMode::kSourceOver);
+                                 Entity::BasicBlendMode::kSourceOver);
     result = result && draw_rect(Rect::MakeLTRB(c.x, c.y, d.x, d.y), color2,
                                  selected_mode);
     return result;
@@ -659,11 +659,11 @@ TEST_F(EntityTest, Filters) {
   auto callback = [&](ContentContext& context, RenderPass& pass) -> bool {
     // Draws kalimba and overwrites it with boston.
     auto blend0 = FilterContents::MakeBlend(
-        Entity::BlendMode::kSourceOver, {kalimba, boston});
+        Entity::BasicBlendMode::kSourceOver, {kalimba, boston});
 
     // Adds bridge*3 to boston.
     auto blend1 = FilterContents::MakeBlend(
-        Entity::BlendMode::kPlus, {bridge, bridge, blend0, bridge});
+        Entity::BasicBlendMode::kPlus, {bridge, bridge, blend0, bridge});
 
     Entity entity;
     entity.SetPath(PathBuilder{}.AddRect({100, 100, 300, 300}).TakePath());
