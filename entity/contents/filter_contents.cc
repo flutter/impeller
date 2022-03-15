@@ -166,9 +166,6 @@ static void AdvancedBlendPass(std::shared_ptr<Texture> input_d,
                               const ContentContext& renderer,
                               RenderPass& pass,
                               Command& cmd) {
-  FS::BindTextureSamplerD(cmd, input_d, sampler);
-  FS::BindTextureSamplerS(cmd, input_s, sampler);
-  pass.AddCommand(cmd);
 }
 
 template <typename VS, typename FS>
@@ -211,14 +208,10 @@ static bool AdvancedBlend(
   cmd.pipeline = std::move(pipeline);
   VS::BindFrameInfo(cmd, uniform_view);
 
-  auto destination = input_textures[0];
-  for (auto source_i = input_textures.begin() + 1;
-       source_i < input_textures.end(); source_i++) {
-    // destination = output;
-  }
 
-  AdvancedBlendPass<VS, FS>(input_textures[0], input_textures[1], sampler,
-                            renderer, pass, cmd);
+  FS::BindTextureSamplerD(cmd, input_textures[0], sampler);
+  FS::BindTextureSamplerS(cmd, input_textures[1], sampler);
+  pass.AddCommand(cmd);
 
   return true;
 }

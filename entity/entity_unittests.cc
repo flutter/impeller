@@ -659,11 +659,11 @@ TEST_F(EntityTest, Filters) {
   auto callback = [&](ContentContext& context, RenderPass& pass) -> bool {
     // Draws kalimba and overwrites it with boston.
     auto blend0 = FilterContents::MakeBlend(
-        Entity::BasicBlendMode::kSourceOver, {kalimba, boston});
+        Entity::BasicBlendMode::kModulate, {kalimba, boston});
 
     // Adds bridge*3 to boston.
     auto blend1 = FilterContents::MakeBlend(
-        Entity::BasicBlendMode::kPlus, {bridge, bridge, blend0, bridge});
+        Entity::AdvancedBlendMode::kScreen, {bridge, blend0});
 
     Entity entity;
     entity.SetPath(PathBuilder{}.AddRect({100, 100, 300, 300}).TakePath());
