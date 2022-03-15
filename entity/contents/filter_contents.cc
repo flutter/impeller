@@ -156,8 +156,33 @@ BlendFilterContents::BlendFilterContents() {
 
 BlendFilterContents::~BlendFilterContents() = default;
 
-template<typename VS, typename FS>
-static bool AdvancedBlend() {
+using PipelineProc =
+    std::shared_ptr<Pipeline> (ContentContext::*)(ContentContextOptions) const;
+
+template <typename VS, typename FS>
+static void AdvancedBlendPass(std::shared_ptr<Texture> input_d,
+                              std::shared_ptr<Texture> input_s,
+                              std::shared_ptr<const Sampler> sampler,
+                              const ContentContext& renderer,
+                              RenderPass& pass,
+                              Command& cmd) {
+  FS::BindTextureSamplerD(cmd, input_d, sampler);
+  FS::BindTextureSamplerS(cmd, input_s, sampler);
+  pass.AddCommand(cmd);
+}
+
+template <typename VS, typename FS>
+static bool AdvancedBlend(
+    const std::vector<std::shared_ptr<Texture>>& input_textures,
+    const ContentContext& renderer,
+    RenderPass& pass,
+    PipelineProc pipeline_proc) {
+  if (input_textures.size() < 2) {
+    return false;
+  }
+
+  auto& host_buffer = pass.GetTransientsBuffer();
+
   VertexBufferBuilder<typename VS::PerVertexData> vtx_builder;
   vtx_builder.AddVertices({
       {Point(0, 0), Point(0, 0)},
@@ -167,6 +192,34 @@ static bool AdvancedBlend() {
       {Point(1, 1), Point(1, 1)},
       {Point(0, 1), Point(0, 1)},
   });
+  auto vtx_buffer = vtx_builder.CreateVertexBuffer(host_buffer);
+
+  typename VS::FrameInfo frame_info;
+  frame_info.mvp = Matrix::MakeOrthographic(ISize(1, 1));
+
+  auto uniform_view = host_buffer.EmplaceUniform(frame_info);
+  auto sampler = renderer.GetContext()->GetSamplerLibrary()->GetSampler({});
+
+  auto options = OptionsFromPass(pass);
+  options.blend_mode = Entity::BasicBlendMode::kSource;
+  std::shared_ptr<Pipeline> pipeline =
+      std::invoke(pipeline_proc, renderer, options);
+
+  Command cmd;
+  cmd.label = "Advanced Blend Filter";
+  cmd.BindVertices(vtx_buffer);
+  cmd.pipeline = std::move(pipeline);
+  VS::BindFrameInfo(cmd, uniform_view);
+
+  auto destination = input_textures[0];
+  for (auto source_i = input_textures.begin() + 1;
+       source_i < input_textures.end(); source_i++) {
+    // destination = output;
+  }
+
+  AdvancedBlendPass<VS, FS>(input_textures[0], input_textures[1], sampler,
+                            renderer, pass, cmd);
+
   return true;
 }
 
@@ -177,12 +230,14 @@ void BlendFilterContents::SetBlendMode(Entity::BlendMode blend_mode) {
           std::get_if<Entity::AdvancedBlendMode>(&blend_mode)) {
     switch (*advanced_blend) {
       case Entity::AdvancedBlendMode::kScreen:
-        pipeline_proc_ = [](const ContentContext& renderer,
-                            ContentContextOptions& options) {
-          options.blend_mode = Entity::BasicBlendMode::kSourceOver;
-          //AdvancedBlend<TextureBlendPipeline::VertexShader, TextureBlendPipeline::FragmentShader>();
-          return renderer.GetTextureBlendScreenPipeline(options);
-        };
+        advanced_blend_proc_ =
+            [](const std::vector<std::shared_ptr<Texture>>& input_textures,
+               const ContentContext& renderer, RenderPass& pass) {
+              PipelineProc p = &ContentContext::GetTextureBlendScreenPipeline;
+              return AdvancedBlend<TextureBlendScreenPipeline::VertexShader,
+                                   TextureBlendScreenPipeline::FragmentShader>(
+                  input_textures, renderer, pass, p);
+            };
         break;
     }
   }
@@ -215,13 +270,13 @@ static bool BasicBlend(
   auto uniform_view = host_buffer.EmplaceUniform(frame_info);
   auto sampler = renderer.GetContext()->GetSamplerLibrary()->GetSampler({});
 
-  // Draw the first texture using kSourceOver.
+  // Draw the first texture using kSource.
 
   Command cmd;
   cmd.label = "Basic Blend Filter";
   cmd.BindVertices(vtx_buffer);
   auto options = OptionsFromPass(pass);
-  options.blend_mode = Entity::BasicBlendMode::kSourceOver;
+  options.blend_mode = Entity::BasicBlendMode::kSource;
   cmd.pipeline = renderer.GetTextureBlendPipeline(options);
   FS::BindTextureSamplerS(cmd, input_textures[0], sampler);
   VS::BindFrameInfo(cmd, uniform_view);
@@ -245,15 +300,6 @@ static bool BasicBlend(
   return true;
 }
 
-static bool AdvancedBlend(
-    const std::vector<std::shared_ptr<Texture>>& input_textures,
-    const ContentContext& renderer,
-    RenderPass& pass,
-    BlendFilterContents::GetPipelineProc pipeline_proc) {
-
-  return true;
-}
-
 bool BlendFilterContents::RenderFilter(
     const std::vector<std::shared_ptr<Texture>>& input_textures,
     const ContentContext& renderer,
@@ -262,12 +308,18 @@ bool BlendFilterContents::RenderFilter(
     return true;
   }
 
+  if (input_textures.size() == 1) {
+    // Nothing to blend.
+    return BasicBlend(input_textures, renderer, pass,
+                      Entity::BasicBlendMode::kSource);
+  }
+
   if (auto basic_blend = std::get_if<Entity::BasicBlendMode>(&blend_mode_)) {
     return BasicBlend(input_textures, renderer, pass, *basic_blend);
   }
 
   if (std::holds_alternative<Entity::AdvancedBlendMode>(blend_mode_)) {
-    return AdvancedBlend(input_textures, renderer, pass, pipeline_proc_);
+    return advanced_blend_proc_(input_textures, renderer, pass);
   }
 
   FML_UNREACHABLE();

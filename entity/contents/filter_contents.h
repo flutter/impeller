@@ -77,9 +77,10 @@ class FilterContents : public Contents {
 
 class BlendFilterContents : public FilterContents {
  public:
-  using GetPipelineProc =
-      std::function<std::shared_ptr<Pipeline>(const ContentContext& renderer,
-                                              ContentContextOptions& options)>;
+  using AdvancedBlendProc = std::function<bool(
+      const std::vector<std::shared_ptr<Texture>>& input_textures,
+      const ContentContext& renderer,
+      RenderPass& pass)>;
 
   BlendFilterContents();
 
@@ -93,7 +94,7 @@ class BlendFilterContents : public FilterContents {
                     RenderPass& pass) const override;
 
   Entity::BlendMode blend_mode_;
-  GetPipelineProc pipeline_proc_;
+  AdvancedBlendProc advanced_blend_proc_;
 
   FML_DISALLOW_COPY_AND_ASSIGN(BlendFilterContents);
 };
