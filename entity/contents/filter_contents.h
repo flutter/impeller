@@ -77,6 +77,10 @@ class FilterContents : public Contents {
 
 class BlendFilterContents : public FilterContents {
  public:
+  using GetPipelineProc =
+      std::function<std::shared_ptr<Pipeline>(const ContentContext& renderer,
+                                              ContentContextOptions& options)>;
+
   BlendFilterContents();
 
   ~BlendFilterContents() override;
@@ -84,10 +88,6 @@ class BlendFilterContents : public FilterContents {
   void SetBlendMode(Entity::BlendMode blend_mode);
 
  private:
-  using GetPipelineProc =
-      std::function<std::shared_ptr<Pipeline>(const ContentContext& renderer,
-                                              ContentContextOptions& options)>;
-
   bool RenderFilter(const std::vector<std::shared_ptr<Texture>>& input_textures,
                     const ContentContext& renderer,
                     RenderPass& pass) const override;
