@@ -503,7 +503,8 @@ TEST_F(EntityTest, BlendingModeOptions) {
     // test GUI.
 
     const Entity::BasicBlendMode b{};
-    static_assert(b == Entity::BasicBlendMode::kClear);  // Ensure the first item in
+    static_assert(b ==
+                  Entity::BasicBlendMode::kClear);  // Ensure the first item in
                                                     // the switch is the first
                                                     // item in the enum.
     switch (b) {
@@ -560,8 +561,9 @@ TEST_F(EntityTest, BlendingModeOptions) {
       ImGui::SetNextWindowPos({200, 450});
     }
 
-    auto draw_rect = [&context, &pass](Rect rect, Color color,
-                                       Entity::BasicBlendMode blend_mode) -> bool {
+    auto draw_rect = [&context, &pass](
+                         Rect rect, Color color,
+                         Entity::BasicBlendMode blend_mode) -> bool {
       using VS = SolidFillPipeline::VertexShader;
       VertexBufferBuilder<VS::PerVertexData> vtx_builder;
       {
@@ -604,7 +606,8 @@ TEST_F(EntityTest, BlendingModeOptions) {
                    blend_mode_names.data(), blend_mode_names.size());
     ImGui::End();
 
-    Entity::BasicBlendMode selected_mode = blend_mode_values[current_blend_index];
+    Entity::BasicBlendMode selected_mode =
+        blend_mode_values[current_blend_index];
 
     Point a, b, c, d;
     std::tie(a, b) = IMPELLER_PLAYGROUND_LINE(
@@ -657,13 +660,11 @@ TEST_F(EntityTest, Filters) {
   ASSERT_TRUE(bridge && boston && kalimba);
 
   auto callback = [&](ContentContext& context, RenderPass& pass) -> bool {
-    // Draws kalimba and overwrites it with boston.
-    auto blend0 = FilterContents::MakeBlend(
-        Entity::BasicBlendMode::kModulate, {kalimba, boston});
+    auto blend0 = FilterContents::MakeBlend(Entity::BasicBlendMode::kModulate,
+                                            {kalimba, boston});
 
-    // Adds bridge*3 to boston.
-    auto blend1 = FilterContents::MakeBlend(
-        Entity::AdvancedBlendMode::kScreen, {bridge, blend0});
+    auto blend1 = FilterContents::MakeBlend(Entity::AdvancedBlendMode::kScreen,
+                                            {bridge, blend0, bridge, bridge});
 
     Entity entity;
     entity.SetPath(PathBuilder{}.AddRect({100, 100, 300, 300}).TakePath());

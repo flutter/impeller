@@ -28,10 +28,27 @@ namespace impeller {
 std::shared_ptr<FilterContents> FilterContents::MakeBlend(
     Entity::BlendMode blend_mode,
     InputTextures input_textures) {
-  auto blend = std::make_shared<BlendFilterContents>();
-  blend->SetInputTextures(input_textures);
-  blend->SetBlendMode(blend_mode);
-  return blend;
+  if (input_textures.size() < 2 ||
+      std::holds_alternative<Entity::BasicBlendMode>(blend_mode)) {
+    auto blend = std::make_shared<BlendFilterContents>();
+    blend->SetInputTextures(input_textures);
+    blend->SetBlendMode(blend_mode);
+    return blend;
+  }
+
+  if (std::holds_alternative<Entity::AdvancedBlendMode>(blend_mode)) {
+    InputVariant blend = input_textures[0];
+    for (auto in_i = input_textures.begin() + 1; in_i < input_textures.end();
+         in_i++) {
+      auto new_blend = std::make_shared<BlendFilterContents>();
+      new_blend->SetInputTextures({blend, *in_i});
+      new_blend->SetBlendMode(blend_mode);
+      blend = new_blend;
+    }
+    return std::get<std::shared_ptr<FilterContents>>(blend);
+  }
+
+  FML_UNREACHABLE();
 }
 
 FilterContents::FilterContents() = default;
@@ -165,8 +182,7 @@ static void AdvancedBlendPass(std::shared_ptr<Texture> input_d,
                               std::shared_ptr<const Sampler> sampler,
                               const ContentContext& renderer,
                               RenderPass& pass,
-                              Command& cmd) {
-}
+                              Command& cmd) {}
 
 template <typename VS, typename FS>
 static bool AdvancedBlend(
@@ -207,7 +223,6 @@ static bool AdvancedBlend(
   cmd.BindVertices(vtx_buffer);
   cmd.pipeline = std::move(pipeline);
   VS::BindFrameInfo(cmd, uniform_view);
-
 
   FS::BindTextureSamplerD(cmd, input_textures[0], sampler);
   FS::BindTextureSamplerS(cmd, input_textures[1], sampler);
