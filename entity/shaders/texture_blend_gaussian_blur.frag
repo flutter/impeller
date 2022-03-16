@@ -5,8 +5,8 @@
 // 1D gaussian blur in the X direction.
 //
 // Paths for future optimization:
-//   * Remove the bounds check branch in SampleColor by adding sampler support
-//     SamplerAddressMode::ClampToBorder for texture samplers.
+//   * Remove the uv bounds check branch in SampleColor by adding optional
+//     support for SamplerAddressMode::ClampToBorder in the texture sampler.
 //   * Sample from higher mipmap levels when the blur radius is high enough.
 
 uniform sampler2D texture_sampler;
