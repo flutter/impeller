@@ -30,6 +30,11 @@ class FilterContents : public Contents {
       Entity::BlendMode blend_mode,
       InputTextures input_textures);
 
+  static std::shared_ptr<FilterContents> MakeGaussianBlur(
+      InputVariant input_texture,
+      Scalar radius,
+      bool expand_border = false);
+
   FilterContents();
 
   ~FilterContents() override;
@@ -54,6 +59,9 @@ class FilterContents : public Contents {
       const Entity& entity,
       RenderPass& pass) const;
 
+  /// @brief Fetch the size of the output texture.
+  ISize GetOutputSize() const;
+
  private:
   /// @brief Takes a set of zero or more input textures and writes to an output
   ///        texture.
@@ -63,7 +71,7 @@ class FilterContents : public Contents {
       RenderPass& pass) const = 0;
 
   /// @brief Determines the size of the output texture.
-  virtual ISize GetOutputSize() const;
+  virtual ISize GetOutputSize(const InputTextures& input_textures) const;
 
   InputTextures input_textures_;
   Rect destination_;
@@ -89,6 +97,7 @@ class BlendFilterContents : public FilterContents {
   void SetBlendMode(Entity::BlendMode blend_mode);
 
  private:
+  // |FilterContents|
   bool RenderFilter(const std::vector<std::shared_ptr<Texture>>& input_textures,
                     const ContentContext& renderer,
                     RenderPass& pass) const override;
@@ -97,6 +106,36 @@ class BlendFilterContents : public FilterContents {
   AdvancedBlendProc advanced_blend_proc_;
 
   FML_DISALLOW_COPY_AND_ASSIGN(BlendFilterContents);
+};
+
+/*******************************************************************************
+ ******* GaussianBlurFilterContents
+ ******************************************************************************/
+
+class GaussianBlurFilterContents final : public FilterContents {
+ public:
+  GaussianBlurFilterContents();
+
+  ~GaussianBlurFilterContents() override;
+
+  void SetRadius(Scalar radius);
+
+  void SetExpandBorder(bool expand);
+
+ private:
+  // |FilterContents|
+  bool RenderFilter(const std::vector<std::shared_ptr<Texture>>& input_textures,
+                    const ContentContext& renderer,
+                    RenderPass& pass) const override;
+
+  // |FilterContents|
+  virtual ISize GetOutputSize(
+      const InputTextures& input_textures) const override;
+
+  Scalar radius_;
+  bool expand_;
+
+  FML_DISALLOW_COPY_AND_ASSIGN(GaussianBlurFilterContents);
 };
 
 }  // namespace impeller

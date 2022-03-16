@@ -25,6 +25,8 @@
 #include "impeller/renderer/formats.h"
 #include "texture_blend.frag.h"
 #include "texture_blend.vert.h"
+#include "texture_blend_gaussian_blur.frag.h"
+#include "texture_blend_gaussian_blur.vert.h"
 #include "texture_blend_screen.frag.h"
 #include "texture_blend_screen.vert.h"
 
@@ -40,6 +42,9 @@ using TextureBlendScreenPipeline =
     PipelineT<TextureBlendScreenVertexShader, TextureBlendScreenFragmentShader>;
 using TexturePipeline =
     PipelineT<TextureFillVertexShader, TextureFillFragmentShader>;
+using TextureBlendGaussianBlurPipeline =
+    PipelineT<TextureBlendGaussianBlurVertexShader,
+              TextureBlendGaussianBlurFragmentShader>;
 using SolidStrokePipeline =
     PipelineT<SolidStrokeVertexShader, SolidStrokeFragmentShader>;
 using GlyphAtlasPipeline =
@@ -100,6 +105,11 @@ class ContentContext {
     return GetPipeline(texture_pipelines_, opts);
   }
 
+  std::shared_ptr<Pipeline> GetTextureBlendGaussianBlurPipeline(
+      ContentContextOptions opts) const {
+    return GetPipeline(texture_blend_gaussian_blur_pipelines_, opts);
+  }
+
   std::shared_ptr<Pipeline> GetSolidStrokePipeline(
       ContentContextOptions opts) const {
     return GetPipeline(solid_stroke_pipelines_, opts);
@@ -138,6 +148,8 @@ class ContentContext {
   mutable Variants<TextureBlendPipeline> texture_blend_pipelines_;
   mutable Variants<TextureBlendScreenPipeline> texture_blend_screen_pipelines_;
   mutable Variants<TexturePipeline> texture_pipelines_;
+  mutable Variants<TextureBlendGaussianBlurPipeline>
+      texture_blend_gaussian_blur_pipelines_;
   mutable Variants<SolidStrokePipeline> solid_stroke_pipelines_;
   mutable Variants<ClipPipeline> clip_pipelines_;
   mutable Variants<ClipPipeline> clip_restoration_pipelines_;

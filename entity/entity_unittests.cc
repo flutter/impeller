@@ -671,5 +671,39 @@ TEST_F(EntityTest, Filters) {
   ASSERT_TRUE(OpenPlaygroundHere(callback));
 }
 
+TEST_F(EntityTest, GaussianBlurFilter) {
+  auto bridge = CreateTextureForFixture("bay_bridge.jpg");
+  auto boston = CreateTextureForFixture("boston.jpg");
+  auto kalimba = CreateTextureForFixture("kalimba.jpg");
+  ASSERT_TRUE(bridge && boston && kalimba);
+
+  bool first_frame = true;
+  auto callback = [&](ContentContext& context, RenderPass& pass) -> bool {
+    if (first_frame) {
+      first_frame = false;
+      ImGui::SetNextWindowSize({350, 200});
+      ImGui::SetNextWindowPos({200, 450});
+    }
+
+    ImGui::Begin("Controls");
+    static float blur_radius = 20;
+    ImGui::SliderFloat("Blur radius", &blur_radius, 0, 100);
+    static bool expand_bounds = true;
+    ImGui::Checkbox("Expand", &expand_bounds);
+    ImGui::End();
+
+    auto blend = FilterContents::MakeBlend(
+        Entity::BlendMode::kPlus, {boston, bridge, bridge});
+
+    auto blur = FilterContents::MakeGaussianBlur(blend, blur_radius, expand_bounds);
+
+    Entity entity;
+    entity.SetPath(PathBuilder{}.AddRect({100, 100, 300, 300}).TakePath());
+    entity.SetContents(blur);
+    return entity.Render(context, pass);
+  };
+  ASSERT_TRUE(OpenPlaygroundHere(callback));
+}
+
 }  // namespace testing
 }  // namespace impeller
