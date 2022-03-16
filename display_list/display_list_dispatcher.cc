@@ -329,13 +329,13 @@ static Path ToPath(const SkPath& path) {
         builder.MoveTo(ToPoint(data.points[0]));
         break;
       case SkPath::kLine_Verb:
-        builder.AddLine(ToPoint(data.points[0]), ToPoint(data.points[1]));
+        builder.LineTo(ToPoint(data.points[0]));
+        builder.LineTo(ToPoint(data.points[1]));
         break;
       case SkPath::kQuad_Verb:
-        builder.AddQuadraticCurve(ToPoint(data.points[0]),  // p1
-                                  ToPoint(data.points[1]),  // cp
-                                  ToPoint(data.points[2])   // p2
-        );
+        builder.LineTo(ToPoint(data.points[0]));
+        builder.QuadraticCurveTo(ToPoint(data.points[1]),
+                                 ToPoint(data.points[2]));
         break;
       case SkPath::kConic_Verb: {
         constexpr auto kPow2 = 1;  // Only works for sweeps up to 90 degrees.
