@@ -13,6 +13,7 @@ uniform sampler2D texture_sampler;
 
 in vec2 v_texture_coords;
 in vec2 v_texture_size;
+in vec2 v_blur_direction;
 in float v_blur_radius;
 
 out vec4 frag_color;
@@ -41,8 +42,8 @@ void main() {
   for (float i = -v_blur_radius; i <= v_blur_radius; i++) {
     float gaussian = Gaussian(i);
     total_gaussian += gaussian;
-    total += SampleWithBorder(v_texture_coords + vec2(i, 0) / v_texture_size) *
-             gaussian;
+    total += gaussian * SampleWithBorder(v_texture_coords +
+                                         v_blur_direction * i / v_texture_size);
   }
   frag_color = total / total_gaussian;
 }

@@ -681,24 +681,34 @@ TEST_F(EntityTest, GaussianBlurFilter) {
   auto callback = [&](ContentContext& context, RenderPass& pass) -> bool {
     if (first_frame) {
       first_frame = false;
-      ImGui::SetNextWindowSize({350, 200});
+      ImGui::SetNextWindowSize({450, 150});
       ImGui::SetNextWindowPos({200, 450});
     }
 
     ImGui::Begin("Controls");
+    static float offset[2] = {500, 400};
+    ImGui::SliderFloat2("Position offset", &offset[0], 0, 1000);
+    static float scale = 1;
+    ImGui::SliderFloat("Scale", &scale, 0, 1);
     static float blur_radius = 20;
-    ImGui::SliderFloat("Blur radius", &blur_radius, 0, 100);
+    ImGui::SliderFloat("Blur radius", &blur_radius, 0, 200);
     static bool expand_bounds = true;
     ImGui::Checkbox("Expand", &expand_bounds);
+
+    auto blend = FilterContents::MakeBlend(Entity::BlendMode::kPlus,
+                                           {boston, bridge, bridge});
+
+    auto blur =
+        FilterContents::MakeGaussianBlur(blend, blur_radius, expand_bounds);
+
+    auto output_size = Size(blur->GetOutputSize());
+    Rect bounds(Point(offset[0], offset[1]) - output_size / 2 * scale,
+                output_size * scale);
+
     ImGui::End();
 
-    auto blend = FilterContents::MakeBlend(
-        Entity::BlendMode::kPlus, {boston, bridge, bridge});
-
-    auto blur = FilterContents::MakeGaussianBlur(blend, blur_radius, expand_bounds);
-
     Entity entity;
-    entity.SetPath(PathBuilder{}.AddRect({100, 100, 300, 300}).TakePath());
+    entity.SetPath(PathBuilder{}.AddRect(bounds).TakePath());
     entity.SetContents(blur);
     return entity.Render(context, pass);
   };

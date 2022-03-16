@@ -4,6 +4,7 @@
 
 #include "filter_contents.h"
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <optional>
@@ -60,15 +61,26 @@ std::shared_ptr<FilterContents> FilterContents::MakeBlend(
   FML_UNREACHABLE();
 }
 
+std::shared_ptr<FilterContents> FilterContents::MakeGaussianBlur1D(
+    InputVariant input_texture,
+    Scalar radius,
+    Point direction,
+    bool expand_border) {
+  auto blur = std::make_shared<GaussianBlur1DFilterContents>();
+  blur->SetInputTextures({input_texture});
+  blur->SetRadius(radius);
+  blur->SetDirection(direction);
+  blur->SetExpandBorder(expand_border);
+  return blur;
+}
+
 std::shared_ptr<FilterContents> FilterContents::MakeGaussianBlur(
     InputVariant input_texture,
     Scalar radius,
     bool expand_border) {
-  auto blur = std::make_shared<GaussianBlurFilterContents>();
-  blur->SetInputTextures({input_texture});
-  blur->SetRadius(radius);
-  blur->SetExpandBorder(expand_border);
-  return blur;
+  auto x_blur =
+      MakeGaussianBlur1D(input_texture, radius, Point(1, 0), expand_border);
+  return MakeGaussianBlur1D(x_blur, radius, Point(0, 1), false);
 }
 
 FilterContents::FilterContents() = default;
@@ -366,22 +378,26 @@ bool BlendFilterContents::RenderFilter(
 }
 
 /*******************************************************************************
- ******* GaussianBlurFilterContents
+ ******* GaussianBlur1DFilterContents
  ******************************************************************************/
 
-GaussianBlurFilterContents::GaussianBlurFilterContents() = default;
+GaussianBlur1DFilterContents::GaussianBlur1DFilterContents() = default;
 
-GaussianBlurFilterContents::~GaussianBlurFilterContents() = default;
+GaussianBlur1DFilterContents::~GaussianBlur1DFilterContents() = default;
 
-void GaussianBlurFilterContents::SetRadius(Scalar radius) {
-  radius_ = radius;
+void GaussianBlur1DFilterContents::SetRadius(Scalar radius) {
+  radius_ = std::max(radius, 1e-3f);
 }
 
-void GaussianBlurFilterContents::SetExpandBorder(bool expand) {
+void GaussianBlur1DFilterContents::SetDirection(Point direction) {
+  direction_ = direction.Normalize();
+}
+
+void GaussianBlur1DFilterContents::SetExpandBorder(bool expand) {
   expand_ = expand;
 }
 
-bool GaussianBlurFilterContents::RenderFilter(
+bool GaussianBlur1DFilterContents::RenderFilter(
     const std::vector<std::shared_ptr<Texture>>& input_textures,
     const ContentContext& renderer,
     RenderPass& pass) const {
@@ -415,6 +431,7 @@ bool GaussianBlurFilterContents::RenderFilter(
   frame_info.mvp = Matrix::MakeOrthographic(size);
   frame_info.texture_size = Point(size);
   frame_info.blur_radius = radius_;
+  frame_info.blur_direction = direction_;
 
   auto uniform_view = host_buffer.EmplaceUniform(frame_info);
   auto sampler = renderer.GetContext()->GetSamplerLibrary()->GetSampler({});
@@ -434,7 +451,7 @@ bool GaussianBlurFilterContents::RenderFilter(
   return true;
 }
 
-ISize GaussianBlurFilterContents::GetOutputSize(
+ISize GaussianBlur1DFilterContents::GetOutputSize(
     const InputTextures& input_textures) const {
   ISize size;
   if (auto filter =
@@ -447,7 +464,7 @@ ISize GaussianBlurFilterContents::GetOutputSize(
     FML_UNREACHABLE();
   }
 
-  return size + ISize(radius_ * 2, radius_ * 2);
+  return size + (expand_ ? ISize(radius_ * 2, radius_ * 2) : ISize());
 }
 
 }  // namespace impeller

@@ -30,6 +30,12 @@ class FilterContents : public Contents {
       Entity::BlendMode blend_mode,
       InputTextures input_textures);
 
+  static std::shared_ptr<FilterContents> MakeGaussianBlur1D(
+      InputVariant input_texture,
+      Scalar radius,
+      Point direction,
+      bool expand_border = false);
+
   static std::shared_ptr<FilterContents> MakeGaussianBlur(
       InputVariant input_texture,
       Scalar radius,
@@ -109,16 +115,18 @@ class BlendFilterContents : public FilterContents {
 };
 
 /*******************************************************************************
- ******* GaussianBlurFilterContents
+ ******* GaussianBlur1DFilterContents
  ******************************************************************************/
 
-class GaussianBlurFilterContents final : public FilterContents {
+class GaussianBlur1DFilterContents final : public FilterContents {
  public:
-  GaussianBlurFilterContents();
+  GaussianBlur1DFilterContents();
 
-  ~GaussianBlurFilterContents() override;
+  ~GaussianBlur1DFilterContents() override;
 
   void SetRadius(Scalar radius);
+
+  void SetDirection(Point direction);
 
   void SetExpandBorder(bool expand);
 
@@ -133,9 +141,10 @@ class GaussianBlurFilterContents final : public FilterContents {
       const InputTextures& input_textures) const override;
 
   Scalar radius_;
+  Point direction_;
   bool expand_;
 
-  FML_DISALLOW_COPY_AND_ASSIGN(GaussianBlurFilterContents);
+  FML_DISALLOW_COPY_AND_ASSIGN(GaussianBlur1DFilterContents);
 };
 
 }  // namespace impeller
