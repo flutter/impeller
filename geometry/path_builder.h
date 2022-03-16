@@ -103,12 +103,16 @@ class PathBuilder {
   Point subpath_start_;
   Point current_;
   Path prototype_;
+  bool is_moving_ = false;
 
   Point ReflectedQuadraticControlPoint1() const;
 
   Point ReflectedCubicControlPoint1() const;
 
+  void MoveToIfNecessary(Point point);
+
   PathBuilder(const PathBuilder&) = delete;
+
   PathBuilder& operator=(const PathBuilder&&) = delete;
 };
 

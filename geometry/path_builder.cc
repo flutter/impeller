@@ -23,13 +23,24 @@ Path PathBuilder::TakePath(FillType fill) {
 }
 
 PathBuilder& PathBuilder::MoveTo(Point point, bool relative) {
+  if (is_moving_) {
+    Close();
+  }
+
+  is_moving_ = true;
+
   current_ = relative ? current_ + point : point;
   subpath_start_ = current_;
   prototype_.AddContourComponent(current_);
+
   return *this;
 }
 
 PathBuilder& PathBuilder::Close() {
+  if (!is_moving_) {
+    return *this;
+  }
+  is_moving_ = false;
   LineTo(subpath_start_);
   prototype_.SetContourClosed(true);
   prototype_.AddContourComponent(current_);
@@ -151,8 +162,20 @@ PathBuilder& PathBuilder::SmoothCubicCurveTo(Point controlPoint2,
   return *this;
 }
 
+void PathBuilder::MoveToIfNecessary(Point point) {
+  if (!is_moving_) {
+    MoveTo(point);
+  }
+}
+
+PathBuilder& PathBuilder::AddLine(const Point& p1, const Point& p2) {
+  MoveToIfNecessary(p1);
+  prototype_.AddLinearComponent(p1, p2);
+  return *this;
+}
+
 PathBuilder& PathBuilder::AddQuadraticCurve(Point p1, Point cp, Point p2) {
-  MoveTo(p1);
+  MoveToIfNecessary(p1);
   prototype_.AddQuadraticComponent(p1, cp, p2);
   return *this;
 }
@@ -161,7 +184,7 @@ PathBuilder& PathBuilder::AddCubicCurve(Point p1,
                                         Point cp1,
                                         Point cp2,
                                         Point p2) {
-  MoveTo(p1);
+  MoveToIfNecessary(p1);
   prototype_.AddCubicComponent(p1, cp1, cp2, p2);
   return *this;
 }
@@ -334,12 +357,6 @@ PathBuilder& PathBuilder::AddOval(const Rect& container) {
 
   Close();
 
-  return *this;
-}
-
-PathBuilder& PathBuilder::AddLine(const Point& p1, const Point& p2) {
-  MoveTo(p1);
-  prototype_.AddLinearComponent(p1, p2);
   return *this;
 }
 
