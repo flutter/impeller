@@ -413,6 +413,7 @@ bool GaussianBlurFilterContents::RenderFilter(
 
   VS::FrameInfo frame_info;
   frame_info.mvp = Matrix::MakeOrthographic(size);
+  frame_info.texture_size = Point(size);
   frame_info.blur_radius = radius_;
 
   auto uniform_view = host_buffer.EmplaceUniform(frame_info);
