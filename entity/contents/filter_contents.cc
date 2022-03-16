@@ -224,8 +224,8 @@ static bool AdvancedBlend(
   cmd.pipeline = std::move(pipeline);
   VS::BindFrameInfo(cmd, uniform_view);
 
-  FS::BindTextureSamplerD(cmd, input_textures[0], sampler);
-  FS::BindTextureSamplerS(cmd, input_textures[1], sampler);
+  FS::BindTextureSamplerDst(cmd, input_textures[0], sampler);
+  FS::BindTextureSamplerSrc(cmd, input_textures[1], sampler);
   pass.AddCommand(cmd);
 
   return true;
@@ -286,7 +286,7 @@ static bool BasicBlend(
   auto options = OptionsFromPass(pass);
   options.blend_mode = Entity::BasicBlendMode::kSource;
   cmd.pipeline = renderer.GetTextureBlendPipeline(options);
-  FS::BindTextureSamplerS(cmd, input_textures[0], sampler);
+  FS::BindTextureSamplerSrc(cmd, input_textures[0], sampler);
   VS::BindFrameInfo(cmd, uniform_view);
   pass.AddCommand(cmd);
 
@@ -301,7 +301,7 @@ static bool BasicBlend(
 
   for (auto texture_i = input_textures.begin() + 1;
        texture_i < input_textures.end(); texture_i++) {
-    FS::BindTextureSamplerS(cmd, *texture_i, sampler);
+    FS::BindTextureSamplerSrc(cmd, *texture_i, sampler);
     pass.AddCommand(cmd);
   }
 
