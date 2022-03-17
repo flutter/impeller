@@ -66,7 +66,7 @@ void Entity::IncrementStencilDepth(uint32_t increment) {
   stencil_depth_ += increment;
 }
 
-void Entity::SetBlendMode(Entity::BlendMode blend_mode) {
+void Entity::SetBlendMode(BlendMode blend_mode) {
   if (blend_mode_ > BlendMode::kLastPipelineBlendMode) {
     VALIDATION_LOG << "Non-pipeline blend modes are not supported by the "
                       "entity blend mode setting.";
