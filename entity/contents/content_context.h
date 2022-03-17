@@ -24,8 +24,6 @@
 #include "impeller/entity/solid_stroke.vert.h"
 #include "impeller/entity/texture_blend.frag.h"
 #include "impeller/entity/texture_blend.vert.h"
-#include "impeller/entity/texture_blend_gaussian_blur.frag.h"
-#include "impeller/entity/texture_blend_gaussian_blur.vert.h"
 #include "impeller/entity/texture_blend_screen.frag.h"
 #include "impeller/entity/texture_blend_screen.vert.h"
 #include "impeller/entity/texture_fill.frag.h"
