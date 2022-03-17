@@ -76,11 +76,16 @@ class Entity {
 
   uint32_t GetStencilDepth() const;
 
+  void SetBlendMode(Entity::BlendMode blend_mode);
+
+  Entity::BlendMode GetBlendMode() const;
+
   bool Render(const ContentContext& renderer, RenderPass& parent_pass) const;
 
  private:
   Matrix transformation_;
   std::shared_ptr<Contents> contents_;
+  Entity::BlendMode blend_mode_ = Entity::BlendMode::kSourceOver;
   Path path_;
   uint32_t stencil_depth_ = 0u;
   bool adds_to_coverage_ = true;

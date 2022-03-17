@@ -65,6 +65,14 @@ void Entity::IncrementStencilDepth(uint32_t increment) {
   stencil_depth_ += increment;
 }
 
+void Entity::SetBlendMode(Entity::BlendMode blend_mode) {
+  blend_mode_ = blend_mode;
+}
+
+Entity::BlendMode Entity::GetBlendMode() const {
+  return blend_mode_;
+}
+
 bool Entity::Render(const ContentContext& renderer,
                     RenderPass& parent_pass) const {
   if (!contents_) {
