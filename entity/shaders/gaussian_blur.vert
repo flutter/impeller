@@ -7,7 +7,8 @@ uniform FrameInfo {
   vec2 texture_size;
   vec2 blur_direction;
   float blur_radius;
-} frame_info;
+}
+frame_info;
 
 in vec2 vertices;
 in vec2 texture_coords;

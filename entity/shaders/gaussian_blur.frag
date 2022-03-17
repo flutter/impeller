@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// 1D gaussian blur in the X direction.
+// 1D (directional) gaussian blur.
 //
 // Paths for future optimization:
 //   * Remove the uv bounds check branch in SampleColor by adding optional
@@ -18,12 +18,12 @@ in float v_blur_radius;
 
 out vec4 frag_color;
 
-const float TWO_PI = 6.283185307179586;
+const float kTwoPi = 6.283185307179586;
 
 float Gaussian(float x) {
   float stddev = v_blur_radius * 0.5;
   float xnorm = x / stddev;
-  return exp(-0.5 * xnorm * xnorm) / (TWO_PI * stddev * stddev);
+  return exp(-0.5 * xnorm * xnorm) / (kTwoPi * stddev * stddev);
 }
 
 // Emulate SamplerAddressMode::ClampToBorder.

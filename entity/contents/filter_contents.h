@@ -115,14 +115,14 @@ class BlendFilterContents : public FilterContents {
 };
 
 /*******************************************************************************
- ******* GaussianBlur1DFilterContents
+ ******* DirectionalGaussionBlurFilterContents
  ******************************************************************************/
 
-class GaussianBlur1DFilterContents final : public FilterContents {
+class DirectionalGaussianBlurFilterContents final : public FilterContents {
  public:
-  GaussianBlur1DFilterContents();
+  DirectionalGaussianBlurFilterContents();
 
-  ~GaussianBlur1DFilterContents() override;
+  ~DirectionalGaussianBlurFilterContents() override;
 
   void SetRadius(Scalar radius);
 
@@ -140,11 +140,11 @@ class GaussianBlur1DFilterContents final : public FilterContents {
   virtual ISize GetOutputSize(
       const InputTextures& input_textures) const override;
 
-  Scalar radius_;
+  Scalar radius_ = 0;
   Point direction_;
-  bool expand_;
+  bool expand_ = false;
 
-  FML_DISALLOW_COPY_AND_ASSIGN(GaussianBlur1DFilterContents);
+  FML_DISALLOW_COPY_AND_ASSIGN(DirectionalGaussianBlurFilterContents);
 };
 
 }  // namespace impeller

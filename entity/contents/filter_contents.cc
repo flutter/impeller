@@ -66,7 +66,7 @@ std::shared_ptr<FilterContents> FilterContents::MakeGaussianBlur1D(
     Scalar radius,
     Point direction,
     bool expand_border) {
-  auto blur = std::make_shared<GaussianBlur1DFilterContents>();
+  auto blur = std::make_shared<DirectionalGaussianBlurFilterContents>();
   blur->SetInputTextures({input_texture});
   blur->SetRadius(radius);
   blur->SetDirection(direction);
@@ -378,31 +378,33 @@ bool BlendFilterContents::RenderFilter(
 }
 
 /*******************************************************************************
- ******* GaussianBlur1DFilterContents
+ ******* DirectionalGaussianBlurFilterContents
  ******************************************************************************/
 
-GaussianBlur1DFilterContents::GaussianBlur1DFilterContents() = default;
+DirectionalGaussianBlurFilterContents::DirectionalGaussianBlurFilterContents() =
+    default;
 
-GaussianBlur1DFilterContents::~GaussianBlur1DFilterContents() = default;
+DirectionalGaussianBlurFilterContents::
+    ~DirectionalGaussianBlurFilterContents() = default;
 
-void GaussianBlur1DFilterContents::SetRadius(Scalar radius) {
+void DirectionalGaussianBlurFilterContents::SetRadius(Scalar radius) {
   radius_ = std::max(radius, 1e-3f);
 }
 
-void GaussianBlur1DFilterContents::SetDirection(Point direction) {
+void DirectionalGaussianBlurFilterContents::SetDirection(Point direction) {
   direction_ = direction.Normalize();
 }
 
-void GaussianBlur1DFilterContents::SetExpandBorder(bool expand) {
+void DirectionalGaussianBlurFilterContents::SetExpandBorder(bool expand) {
   expand_ = expand;
 }
 
-bool GaussianBlur1DFilterContents::RenderFilter(
+bool DirectionalGaussianBlurFilterContents::RenderFilter(
     const std::vector<std::shared_ptr<Texture>>& input_textures,
     const ContentContext& renderer,
     RenderPass& pass) const {
-  using VS = TextureBlendGaussianBlurPipeline::VertexShader;
-  using FS = TextureBlendGaussianBlurPipeline::FragmentShader;
+  using VS = GaussianBlurPipeline::VertexShader;
+  using FS = GaussianBlurPipeline::FragmentShader;
 
   auto& host_buffer = pass.GetTransientsBuffer();
 
@@ -440,7 +442,7 @@ bool GaussianBlur1DFilterContents::RenderFilter(
   cmd.label = "Gaussian Blur Filter";
   auto options = OptionsFromPass(pass);
   options.blend_mode = Entity::BlendMode::kSource;
-  cmd.pipeline = renderer.GetTextureBlendGaussianBlurPipeline(options);
+  cmd.pipeline = renderer.GetGaussianBlurPipeline(options);
   cmd.BindVertices(vtx_buffer);
   VS::BindFrameInfo(cmd, uniform_view);
   for (const auto& texture : input_textures) {
@@ -451,7 +453,7 @@ bool GaussianBlur1DFilterContents::RenderFilter(
   return true;
 }
 
-ISize GaussianBlur1DFilterContents::GetOutputSize(
+ISize DirectionalGaussianBlurFilterContents::GetOutputSize(
     const InputTextures& input_textures) const {
   ISize size;
   if (auto filter =
