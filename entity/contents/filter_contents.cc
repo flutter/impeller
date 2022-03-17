@@ -64,7 +64,7 @@ std::shared_ptr<FilterContents> FilterContents::MakeBlend(
 std::shared_ptr<FilterContents> FilterContents::MakeDirectionalGaussianBlur(
     InputVariant input_texture,
     Scalar radius,
-    Point direction,
+    Vector2 direction,
     bool clip_border) {
   auto blur = std::make_shared<DirectionalGaussianBlurFilterContents>();
   blur->SetInputTextures({input_texture});
@@ -391,7 +391,7 @@ void DirectionalGaussianBlurFilterContents::SetRadius(Scalar radius) {
   radius_ = std::max(radius, 1e-3f);
 }
 
-void DirectionalGaussianBlurFilterContents::SetDirection(Point direction) {
+void DirectionalGaussianBlurFilterContents::SetDirection(Vector2 direction) {
   direction_ = direction.Normalize();
 }
 

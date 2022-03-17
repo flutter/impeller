@@ -33,7 +33,7 @@ class FilterContents : public Contents {
   static std::shared_ptr<FilterContents> MakeDirectionalGaussianBlur(
       InputVariant input_texture,
       Scalar radius,
-      Point direction,
+      Vector2 direction,
       bool clip_border = false);
 
   static std::shared_ptr<FilterContents> MakeGaussianBlur(
@@ -126,7 +126,7 @@ class DirectionalGaussianBlurFilterContents final : public FilterContents {
 
   void SetRadius(Scalar radius);
 
-  void SetDirection(Point direction);
+  void SetDirection(Vector2 direction);
 
   void SetClipBorder(bool clip);
 
@@ -141,7 +141,7 @@ class DirectionalGaussianBlurFilterContents final : public FilterContents {
       const InputTextures& input_textures) const override;
 
   Scalar radius_ = 0;
-  Point direction_;
+  Vector2 direction_;
   bool clip_ = false;
 
   FML_DISALLOW_COPY_AND_ASSIGN(DirectionalGaussianBlurFilterContents);
