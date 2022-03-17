@@ -28,8 +28,6 @@ bool ClearContents::Render(const ContentContext& renderer,
   Entity clear_entity = entity;
   clear_entity.SetPath(
       PathBuilder{}.AddRect(Size(pass.GetRenderTargetSize())).TakePath());
-  // Set blend mode to overwrite the destination.
-  clear_entity.SetBlendMode(Entity::BlendMode::kSource);
   return contents_->Render(renderer, clear_entity, pass);
 }
 
