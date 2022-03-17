@@ -30,16 +30,16 @@ class FilterContents : public Contents {
       Entity::BlendMode blend_mode,
       InputTextures input_textures);
 
-  static std::shared_ptr<FilterContents> MakeGaussianBlur1D(
+  static std::shared_ptr<FilterContents> MakeDirectionalGaussianBlur(
       InputVariant input_texture,
       Scalar radius,
       Point direction,
-      bool expand_border = false);
+      bool clip_border = false);
 
   static std::shared_ptr<FilterContents> MakeGaussianBlur(
       InputVariant input_texture,
       Scalar radius,
-      bool expand_border = false);
+      bool clip_border = false);
 
   FilterContents();
 
@@ -128,7 +128,7 @@ class DirectionalGaussianBlurFilterContents final : public FilterContents {
 
   void SetDirection(Point direction);
 
-  void SetExpandBorder(bool expand);
+  void SetClipBorder(bool clip);
 
  private:
   // |FilterContents|
@@ -142,7 +142,7 @@ class DirectionalGaussianBlurFilterContents final : public FilterContents {
 
   Scalar radius_ = 0;
   Point direction_;
-  bool expand_ = false;
+  bool clip_ = false;
 
   FML_DISALLOW_COPY_AND_ASSIGN(DirectionalGaussianBlurFilterContents);
 };

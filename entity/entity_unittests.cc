@@ -692,14 +692,14 @@ TEST_F(EntityTest, GaussianBlurFilter) {
     ImGui::SliderFloat("Scale", &scale, 0, 1);
     static float blur_radius = 20;
     ImGui::SliderFloat("Blur radius", &blur_radius, 0, 200);
-    static bool expand_bounds = true;
-    ImGui::Checkbox("Expand", &expand_bounds);
+    static bool clip_border = true;
+    ImGui::Checkbox("Clip", &clip_border);
 
     auto blend = FilterContents::MakeBlend(Entity::BlendMode::kPlus,
                                            {boston, bridge, bridge});
 
     auto blur =
-        FilterContents::MakeGaussianBlur(blend, blur_radius, expand_bounds);
+        FilterContents::MakeGaussianBlur(blend, blur_radius, clip_border);
 
     auto output_size = Size(blur->GetOutputSize());
     Rect bounds(Point(offset[0], offset[1]) - output_size / 2 * scale,

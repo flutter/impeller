@@ -61,26 +61,26 @@ std::shared_ptr<FilterContents> FilterContents::MakeBlend(
   FML_UNREACHABLE();
 }
 
-std::shared_ptr<FilterContents> FilterContents::MakeGaussianBlur1D(
+std::shared_ptr<FilterContents> FilterContents::MakeDirectionalGaussianBlur(
     InputVariant input_texture,
     Scalar radius,
     Point direction,
-    bool expand_border) {
+    bool clip_border) {
   auto blur = std::make_shared<DirectionalGaussianBlurFilterContents>();
   blur->SetInputTextures({input_texture});
   blur->SetRadius(radius);
   blur->SetDirection(direction);
-  blur->SetExpandBorder(expand_border);
+  blur->SetClipBorder(clip_border);
   return blur;
 }
 
 std::shared_ptr<FilterContents> FilterContents::MakeGaussianBlur(
     InputVariant input_texture,
     Scalar radius,
-    bool expand_border) {
-  auto x_blur =
-      MakeGaussianBlur1D(input_texture, radius, Point(1, 0), expand_border);
-  return MakeGaussianBlur1D(x_blur, radius, Point(0, 1), false);
+    bool clip_border) {
+  auto x_blur = MakeDirectionalGaussianBlur(input_texture, radius, Point(1, 0),
+                                            clip_border);
+  return MakeDirectionalGaussianBlur(x_blur, radius, Point(0, 1), false);
 }
 
 FilterContents::FilterContents() = default;
@@ -395,8 +395,8 @@ void DirectionalGaussianBlurFilterContents::SetDirection(Point direction) {
   direction_ = direction.Normalize();
 }
 
-void DirectionalGaussianBlurFilterContents::SetExpandBorder(bool expand) {
-  expand_ = expand;
+void DirectionalGaussianBlurFilterContents::SetClipBorder(bool clip) {
+  clip_ = clip;
 }
 
 bool DirectionalGaussianBlurFilterContents::RenderFilter(
@@ -409,7 +409,7 @@ bool DirectionalGaussianBlurFilterContents::RenderFilter(
   auto& host_buffer = pass.GetTransientsBuffer();
 
   ISize size = FilterContents::GetOutputSize();
-  Point uv_offset = expand_ ? (Point(radius_, radius_) / size) : Point();
+  Point uv_offset = clip_ ? (Point(radius_, radius_) / size) : Point();
   // LTRB
   Scalar uv[4] = {
       -uv_offset.x,
@@ -466,7 +466,7 @@ ISize DirectionalGaussianBlurFilterContents::GetOutputSize(
     FML_UNREACHABLE();
   }
 
-  return size + (expand_ ? ISize(radius_ * 2, radius_ * 2) : ISize());
+  return size + (clip_ ? ISize(radius_ * 2, radius_ * 2) : ISize());
 }
 
 }  // namespace impeller
