@@ -28,15 +28,21 @@ namespace impeller {
 std::shared_ptr<FilterContents> FilterContents::MakeBlend(
     Entity::BlendMode blend_mode,
     InputTextures input_textures) {
+  if (blend_mode > Entity::BlendMode::kLastAdvancedBlendMode) {
+    VALIDATION_LOG << "Invalid blend mode " << static_cast<int>(blend_mode)
+                   << " passed to FilterContents::MakeBlend.";
+    return nullptr;
+  }
+
   if (input_textures.size() < 2 ||
-      std::holds_alternative<Entity::BasicBlendMode>(blend_mode)) {
+      blend_mode <= Entity::BlendMode::kLastPipelineBlendMode) {
     auto blend = std::make_shared<BlendFilterContents>();
     blend->SetInputTextures(input_textures);
     blend->SetBlendMode(blend_mode);
     return blend;
   }
 
-  if (std::holds_alternative<Entity::AdvancedBlendMode>(blend_mode)) {
+  if (blend_mode <= Entity::BlendMode::kLastAdvancedBlendMode) {
     InputVariant blend = input_textures[0];
     for (auto in_i = input_textures.begin() + 1; in_i < input_textures.end();
          in_i++) {
@@ -168,7 +174,7 @@ ISize FilterContents::GetOutputSize() const {
  ******************************************************************************/
 
 BlendFilterContents::BlendFilterContents() {
-  SetBlendMode(Entity::BasicBlendMode::kSourceOver);
+  SetBlendMode(Entity::BlendMode::kSourceOver);
 }
 
 BlendFilterContents::~BlendFilterContents() = default;
@@ -214,7 +220,7 @@ static bool AdvancedBlend(
   auto sampler = renderer.GetContext()->GetSamplerLibrary()->GetSampler({});
 
   auto options = OptionsFromPass(pass);
-  options.blend_mode = Entity::BasicBlendMode::kSource;
+  options.blend_mode = Entity::BlendMode::kSource;
   std::shared_ptr<Pipeline> pipeline =
       std::invoke(pipeline_proc, renderer, options);
 
@@ -232,12 +238,19 @@ static bool AdvancedBlend(
 }
 
 void BlendFilterContents::SetBlendMode(Entity::BlendMode blend_mode) {
+  if (blend_mode > Entity::BlendMode::kLastAdvancedBlendMode) {
+    VALIDATION_LOG << "Invalid blend mode " << static_cast<int>(blend_mode)
+                   << " assigned to BlendFilterContents.";
+  }
+
   blend_mode_ = blend_mode;
 
-  if (auto advanced_blend =
-          std::get_if<Entity::AdvancedBlendMode>(&blend_mode)) {
-    switch (*advanced_blend) {
-      case Entity::AdvancedBlendMode::kScreen:
+  if (blend_mode > Entity::BlendMode::kLastPipelineBlendMode) {
+    static_assert(Entity::BlendMode::kLastAdvancedBlendMode ==
+                  Entity::BlendMode::kScreen);
+
+    switch (blend_mode) {
+      case Entity::BlendMode::kScreen:
         advanced_blend_proc_ =
             [](const std::vector<std::shared_ptr<Texture>>& input_textures,
                const ContentContext& renderer, RenderPass& pass) {
@@ -247,6 +260,8 @@ void BlendFilterContents::SetBlendMode(Entity::BlendMode blend_mode) {
                   input_textures, renderer, pass, p);
             };
         break;
+      default:
+        FML_UNREACHABLE();
     }
   }
 }
@@ -255,7 +270,7 @@ static bool BasicBlend(
     const std::vector<std::shared_ptr<Texture>>& input_textures,
     const ContentContext& renderer,
     RenderPass& pass,
-    Entity::BasicBlendMode basic_blend) {
+    Entity::BlendMode basic_blend) {
   using VS = TextureBlendPipeline::VertexShader;
   using FS = TextureBlendPipeline::FragmentShader;
 
@@ -284,7 +299,7 @@ static bool BasicBlend(
   cmd.label = "Basic Blend Filter";
   cmd.BindVertices(vtx_buffer);
   auto options = OptionsFromPass(pass);
-  options.blend_mode = Entity::BasicBlendMode::kSource;
+  options.blend_mode = Entity::BlendMode::kSource;
   cmd.pipeline = renderer.GetTextureBlendPipeline(options);
   FS::BindTextureSamplerSrc(cmd, input_textures[0], sampler);
   VS::BindFrameInfo(cmd, uniform_view);
@@ -319,14 +334,14 @@ bool BlendFilterContents::RenderFilter(
   if (input_textures.size() == 1) {
     // Nothing to blend.
     return BasicBlend(input_textures, renderer, pass,
-                      Entity::BasicBlendMode::kSource);
+                      Entity::BlendMode::kSource);
   }
 
-  if (auto basic_blend = std::get_if<Entity::BasicBlendMode>(&blend_mode_)) {
-    return BasicBlend(input_textures, renderer, pass, *basic_blend);
+  if (blend_mode_ <= Entity::BlendMode::kLastPipelineBlendMode) {
+    return BasicBlend(input_textures, renderer, pass, blend_mode_);
   }
 
-  if (std::holds_alternative<Entity::AdvancedBlendMode>(blend_mode_)) {
+  if (blend_mode_ <= Entity::BlendMode::kLastAdvancedBlendMode) {
     return advanced_blend_proc_(input_textures, renderer, pass);
   }
 

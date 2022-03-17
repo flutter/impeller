@@ -19,9 +19,11 @@ class RenderPass;
 
 class Entity {
  public:
-  /// Basic blends are blends which can be performed using the standard pipeline
-  /// blend equations.
-  enum class BasicBlendMode {
+  /// All blend modes assume that both the source (fragment output) and
+  /// destination (first color attachment) have colors with premultiplied alpha.
+  enum class BlendMode {
+    // The following blend modes are able to be used as pipeline blend modes or
+    // via `BlendFilterContents`.
     kClear,
     kSource,
     kDestination,
@@ -36,18 +38,15 @@ class Entity {
     kXor,
     kPlus,
     kModulate,
-  };
 
-  /// Advanced blends are blends which require special fragment shaders or API
-  /// extensions and cannot be performed using the standard pipeline blend
-  /// equations.
-  enum class AdvancedBlendMode {
+    // The following blend modes use equations that are not available for
+    // pipelines on most graphics devices without extensions, and so they are
+    // only able to be used via `BlendFilterContents`.
     kScreen,
-  };
 
-  /// All blend modes assume that both the source (fragment output) and
-  /// destination (first color attachment) have colors with premultiplied alpha.
-  using BlendMode = std::variant<BasicBlendMode, AdvancedBlendMode>;
+    kLastPipelineBlendMode = kModulate,
+    kLastAdvancedBlendMode = kScreen,
+  };
 
   Entity();
 
