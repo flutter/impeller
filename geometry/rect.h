@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <array>
 #include <optional>
 #include <ostream>
 #include <vector>
@@ -48,6 +49,20 @@ struct TRect {
 
   constexpr static TRect MakeSize(const TSize<Type>& size) {
     return TRect(0.0, 0.0, size.width, size.height);
+  }
+
+  constexpr static TRect MakePointBounds(const std::array<TPoint<Type>, 4>& p) {
+    auto left = p[0].x;
+    auto top = p[0].x;
+    auto right = p[0].y;
+    auto bottom = p[0].y;
+    for (uint i = 1; i < 4; i++) {
+      left = std::min(left, p[i].x);
+      top = std::min(top, p[i].y);
+      right = std::max(right, p[i].x);
+      bottom = std::max(bottom, p[i].y);
+    }
+    return TRect::MakeLTRB(left, top, right, bottom);
   }
 
   template <class U>
@@ -114,6 +129,15 @@ struct TRect {
     const auto right = std::max(origin.x, origin.x + size.width);
     const auto bottom = std::max(origin.y, origin.y + size.height);
     return {left, top, right, bottom};
+  }
+
+  constexpr std::array<TPoint<T>, 4> GetPoints() const {
+    const auto left = std::min(origin.x, origin.x + size.width);
+    const auto top = std::min(origin.y, origin.y + size.height);
+    const auto right = std::max(origin.x, origin.x + size.width);
+    const auto bottom = std::max(origin.y, origin.y + size.height);
+    return {TPoint(left, top), TPoint(right, top), TPoint(left, bottom),
+            TPoint(right, bottom)};
   }
 
   constexpr TRect Union(const TRect& o) const {
