@@ -4,14 +4,20 @@
 
 uniform FrameInfo {
   mat4 mvp;
+  vec2 dst_uv_offset;
+  vec2 src_uv_offset;
 } frame_info;
 
 in vec2 vertices;
 in vec2 texture_coords;
 
 out vec2 v_texture_coords;
+out vec2 v_dst_uv_offset;
+out vec2 v_src_uv_offset;
 
 void main() {
   gl_Position = frame_info.mvp * vec4(vertices, 0.0, 1.0);
   v_texture_coords = texture_coords;
+  v_dst_uv_offset = frame_info.dst_uv_offset;
+  v_src_uv_offset = frame_info.src_uv_offset;
 }

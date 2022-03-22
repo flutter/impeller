@@ -27,6 +27,10 @@ Contents::Contents() = default;
 
 Contents::~Contents() = default;
 
+bool Contents::IsFilter() const {
+  return false;
+}
+
 Rect Contents::GetBounds(const Entity& entity) const {
   const auto& transform = entity.GetTransformation();
   auto points = entity.GetPath().GetBoundingBox()->GetPoints();

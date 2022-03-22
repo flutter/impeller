@@ -11,7 +11,8 @@ namespace impeller {
 class BlendFilterContents : public FilterContents {
  public:
   using AdvancedBlendProc = std::function<bool(
-      const std::vector<std::shared_ptr<Texture>>& input_textures,
+      const std::vector<std::tuple<std::shared_ptr<Texture>, Point>>&
+          input_textures,
       const ContentContext& renderer,
       RenderPass& pass)>;
 
@@ -23,9 +24,11 @@ class BlendFilterContents : public FilterContents {
 
  private:
   // |FilterContents|
-  bool RenderFilter(const std::vector<std::shared_ptr<Texture>>& input_textures,
-                    const ContentContext& renderer,
-                    RenderPass& pass) const override;
+  bool RenderFilter(
+      const std::vector<std::tuple<std::shared_ptr<Texture>, Point>>&
+          input_textures,
+      const ContentContext& renderer,
+      RenderPass& pass) const override;
 
   Entity::BlendMode blend_mode_;
   AdvancedBlendProc advanced_blend_proc_;

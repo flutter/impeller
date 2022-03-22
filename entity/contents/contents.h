@@ -34,6 +34,10 @@ class Contents {
                       const Entity& entity,
                       RenderPass& pass) const = 0;
 
+  /// @brief Returns true if this Contents is a FilterContents. This is useful
+  ///        for downcasting to FilterContents without RTTI.
+  virtual bool IsFilter() const;
+
   /// @brief Get the bounding rectangle that this contents modifies in screen
   ///        space.
   virtual Rect GetBounds(const Entity& entity) const;

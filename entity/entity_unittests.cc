@@ -690,25 +690,24 @@ TEST_F(EntityTest, GaussianBlurFilter) {
     ImGui::SliderFloat2("Position offset", &offset[0], 0, 1000);
     static float scale = 1;
     ImGui::SliderFloat("Scale", &scale, 0, 1);
-    static float blur_radius = 20;
-    ImGui::SliderFloat("Blur radius", &blur_radius, 0, 200);
+    static float blur_amount[2] = {20, 20};
+    ImGui::SliderFloat2("Blur", &blur_amount[0], 0, 200);
     static bool clip_border = true;
     ImGui::Checkbox("Clip", &clip_border);
+    ImGui::End();
 
     auto blend = FilterContents::MakeBlend(Entity::BlendMode::kPlus,
                                            {boston, bridge, bridge});
 
     auto blur =
-        FilterContents::MakeGaussianBlur(blend, blur_radius, clip_border);
+        FilterContents::MakeGaussianBlur(blend, blur_amount[0], blur_amount[1]);
 
-    auto output_size = Size(blur->GetOutputSize());
-    Rect bounds(Point(offset[0], offset[1]) - output_size / 2 * scale,
-                output_size * scale);
-
-    ImGui::End();
+    // auto output_size = blur->GetBounds(entity).size;
+    // Rect bounds(Point(offset[0], offset[1]) - output_size / 2 * scale,
+    //             output_size * scale);
 
     Entity entity;
-    entity.SetPath(PathBuilder{}.AddRect(bounds).TakePath());
+    entity.SetPath(PathBuilder{}.AddRect(Rect(100, 100, 300, 300)).TakePath());
     entity.SetContents(blur);
     return entity.Render(context, pass);
   };
