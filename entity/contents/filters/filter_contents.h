@@ -53,6 +53,9 @@ class FilterContents : public Contents {
               const Entity& entity,
               RenderPass& pass) const override;
 
+  // |Contents|
+  Rect GetBounds(const Entity& entity) const override;
+
   /// @brief Renders dependency filters, creates a subpass, and calls the
   ///        `RenderFilter` defined by the subclasses.
   std::optional<std::shared_ptr<Texture>> RenderFilterToTexture(

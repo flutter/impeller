@@ -27,4 +27,13 @@ Contents::Contents() = default;
 
 Contents::~Contents() = default;
 
+Rect Contents::GetBounds(const Entity& entity) const {
+  const auto& transform = entity.GetTransformation();
+  auto points = entity.GetPath().GetBoundingBox()->GetPoints();
+  for (uint i = 0; i < points.size(); i++) {
+    points[i] = transform * points[i];
+  }
+  return Rect::MakePointBounds(points);
+}
+
 }  // namespace impeller

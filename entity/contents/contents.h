@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "flutter/fml/macros.h"
+#include "impeller/geometry/rect.h"
 
 namespace impeller {
 
@@ -32,6 +33,10 @@ class Contents {
   virtual bool Render(const ContentContext& renderer,
                       const Entity& entity,
                       RenderPass& pass) const = 0;
+
+  /// @brief Get the bounding rectangle that this contents modifies in screen
+  ///        space.
+  virtual Rect GetBounds(const Entity& entity) const;
 
  private:
   FML_DISALLOW_COPY_AND_ASSIGN(Contents);

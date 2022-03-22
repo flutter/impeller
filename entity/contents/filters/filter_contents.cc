@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
 #include <optional>
 
 #include "flutter/fml/logging.h"
@@ -103,6 +104,42 @@ bool FilterContents::Render(const ContentContext& renderer,
   contents->SetSourceRect(IRect::MakeSize(texture->GetSize()));
 
   return contents->Render(renderer, entity, pass);
+}
+
+static Rect GetBoundsForInput(const Entity& entity,
+                              const FilterContents::InputVariant& input) {
+  if (auto contents = std::get_if<std::shared_ptr<FilterContents>>(&input)) {
+    return contents->get()->GetBounds(entity);
+  }
+
+  if (auto texture = std::get_if<std::shared_ptr<Texture>>(&input)) {
+    auto size = Size(texture->get()->GetSize());
+    auto points = Rect::MakeSize(size).GetPoints();
+
+    const auto& transform = entity.GetTransformation();
+    for (uint i = 0; i < points.size(); i++) {
+      points[i] = transform * points[i];
+    }
+    return Rect::MakePointBounds(points);
+  }
+
+  FML_UNREACHABLE();
+}
+
+Rect FilterContents::GetBounds(const Entity& entity) const {
+  // The bounds of FilterContents is just the union of its inputs. Specific FilterContents implementations may choose
+
+  if (input_textures_.empty()) {
+    return Rect();
+  }
+
+  Rect result = GetBoundsForInput(entity, input_textures_.front());
+  for (auto input_i = input_textures_.begin() + 1;
+       input_i < input_textures_.end(); input_i++) {
+    result.Union(GetBoundsForInput(entity, *input_i));
+  }
+
+  return result;
 }
 
 std::optional<std::shared_ptr<Texture>> FilterContents::RenderFilterToTexture(
