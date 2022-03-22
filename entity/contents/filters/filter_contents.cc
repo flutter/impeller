@@ -192,11 +192,11 @@ static std::optional<std::shared_ptr<Texture>> MakeSubpass(
 }
 
 static std::optional<std::tuple<std::shared_ptr<Texture>, Point>>
-RenderInputToTexture(const ContentContext& renderer,
-                     const Entity& entity,
-                     RenderPass& pass,
-                     Size pass_size,
-                     FilterContents::InputVariant input) {
+ResolveTextureForInput(const ContentContext& renderer,
+                       const Entity& entity,
+                       RenderPass& pass,
+                       Size pass_size,
+                       FilterContents::InputVariant input) {
   auto input_bounds = FilterContents::GetBoundsForInput(entity, input);
   Point draw_offset = input_bounds.origin - input_bounds.origin;
 
@@ -253,7 +253,7 @@ std::optional<std::shared_ptr<Texture>> FilterContents::RenderFilterToTexture(
   input_textures.reserve(input_textures_.size());
   for (const auto& input : input_textures_) {
     auto texture_and_offset =
-        RenderInputToTexture(renderer, entity, pass, bounds.size, input);
+        ResolveTextureForInput(renderer, entity, pass, bounds.size, input);
     if (!texture_and_offset.has_value()) {
       continue;
     }

@@ -39,14 +39,24 @@ bool DirectionalGaussianBlurFilterContents::RenderFilter(
   auto& host_buffer = pass.GetTransientsBuffer();
 
   auto size = pass.GetRenderTargetSize();
+  auto uv_offset = blur_vector_ / size;
+
+  // LTRB
+  Scalar uv[4] = {
+      -uv_offset.x,
+      -uv_offset.y,
+      1 + uv_offset.x,
+      1 + uv_offset.y,
+  };
+
   VertexBufferBuilder<VS::PerVertexData> vtx_builder;
   vtx_builder.AddVertices({
-      {Point(0, 0), Point(0, 0)},
-      {Point(size.width, 0), Point(1, 0)},
-      {Point(size.width, size.height), Point(1, 1)},
-      {Point(0, 0), Point(0, 0)},
-      {Point(size.width, size.height), Point(1, 1)},
-      {Point(0, size.height), Point(0, 1)},
+      {Point(0, 0), Point(uv[0], uv[1])},
+      {Point(size.width, 0), Point(uv[2], uv[1])},
+      {Point(size.width, size.height), Point(uv[2], uv[3])},
+      {Point(0, 0), Point(uv[0], uv[1])},
+      {Point(size.width, size.height), Point(uv[2], uv[3])},
+      {Point(0, size.height), Point(uv[0], uv[3])},
   });
   auto vtx_buffer = vtx_builder.CreateVertexBuffer(host_buffer);
 
