@@ -48,9 +48,6 @@ class FilterContents : public Contents {
   void SetInputTextures(InputTextures input_textures);
 
   // |Contents|
-  bool IsFilter() const override;
-
-  // |Contents|
   bool Render(const ContentContext& renderer,
               const Entity& entity,
               RenderPass& pass) const override;
@@ -58,22 +55,18 @@ class FilterContents : public Contents {
   // |Contents|
   Rect GetBounds(const Entity& entity) const override;
 
-  /// @brief Renders dependency filters, creates a subpass, and calls the
-  ///        `RenderFilter` defined by the subclasses.
-  std::optional<std::shared_ptr<Texture>> RenderFilterToTexture(
+  // |Contents|
+  virtual std::optional<Snapshot> RenderToTexture(
       const ContentContext& renderer,
-      const Entity& entity,
-      RenderPass& pass) const;
+      const Entity& entity) const override;
 
  private:
   /// @brief Takes a set of zero or more input textures and writes to an output
   ///        texture.
-  virtual bool RenderFilter(
-      const std::vector<std::tuple<std::shared_ptr<Texture>, Rect>>&
-          input_textures,
-      const ContentContext& renderer,
-      RenderPass& pass,
-      const Matrix& transform) const = 0;
+  virtual bool RenderFilter(const std::vector<Snapshot>& input_textures,
+                            const ContentContext& renderer,
+                            RenderPass& pass,
+                            const Matrix& transform) const = 0;
 
   InputTextures input_textures_;
   Rect destination_;

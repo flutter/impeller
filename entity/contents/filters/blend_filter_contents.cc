@@ -20,12 +20,10 @@ using PipelineProc =
     std::shared_ptr<Pipeline> (ContentContext::*)(ContentContextOptions) const;
 
 template <typename VS, typename FS>
-static bool AdvancedBlend(
-    const std::vector<std::tuple<std::shared_ptr<Texture>, Rect>>&
-        input_textures,
-    const ContentContext& renderer,
-    RenderPass& pass,
-    PipelineProc pipeline_proc) {
+static bool AdvancedBlend(const std::vector<Contents::Snapshot>& input_textures,
+                          const ContentContext& renderer,
+                          RenderPass& pass,
+                          PipelineProc pipeline_proc) {
   if (input_textures.size() < 2) {
     return false;
   }
@@ -58,17 +56,19 @@ static bool AdvancedBlend(
   typename VS::FrameInfo frame_info;
   frame_info.mvp = Matrix::MakeOrthographic(size);
 
-  auto [dst_texture, dst_rect] = input_textures[1];
-  FS::BindTextureSamplerSrc(cmd, dst_texture, sampler);
+  auto dst_snapshot = input_textures[1];
+  FS::BindTextureSamplerSrc(cmd, dst_snapshot.texture, sampler);
   frame_info.dst_uv_transform =
-      Matrix::MakeTranslation(-dst_rect.origin / size) *
-      Matrix::MakeScale(Vector3(Size(size) / dst_rect.size));
+      Matrix::MakeTranslation(-dst_snapshot.position / size) *
+      Matrix::MakeScale(
+          Vector3(Size(size) / Size(dst_snapshot.texture->GetSize())));
 
-  auto [src_texture, src_rect] = input_textures[0];
-  FS::BindTextureSamplerDst(cmd, src_texture, sampler);
+  auto src_snapshot = input_textures[0];
+  FS::BindTextureSamplerDst(cmd, src_snapshot.texture, sampler);
   frame_info.src_uv_transform =
-      Matrix::MakeTranslation(-src_rect.origin / size) *
-      Matrix::MakeScale(Vector3(Size(size) / src_rect.size));
+      Matrix::MakeTranslation(-src_snapshot.position / size) *
+      Matrix::MakeScale(
+          Vector3(Size(size) / Size(src_snapshot.texture->GetSize())));
 
   auto uniform_view = host_buffer.EmplaceUniform(frame_info);
   VS::BindFrameInfo(cmd, uniform_view);
@@ -91,15 +91,14 @@ void BlendFilterContents::SetBlendMode(Entity::BlendMode blend_mode) {
 
     switch (blend_mode) {
       case Entity::BlendMode::kScreen:
-        advanced_blend_proc_ =
-            [](const std::vector<std::tuple<std::shared_ptr<Texture>, Rect>>&
-                   input_textures,
-               const ContentContext& renderer, RenderPass& pass) {
-              PipelineProc p = &ContentContext::GetTextureBlendScreenPipeline;
-              return AdvancedBlend<TextureBlendScreenPipeline::VertexShader,
-                                   TextureBlendScreenPipeline::FragmentShader>(
-                  input_textures, renderer, pass, p);
-            };
+        advanced_blend_proc_ = [](const std::vector<Snapshot>& input_textures,
+                                  const ContentContext& renderer,
+                                  RenderPass& pass) {
+          PipelineProc p = &ContentContext::GetTextureBlendScreenPipeline;
+          return AdvancedBlend<TextureBlendScreenPipeline::VertexShader,
+                               TextureBlendScreenPipeline::FragmentShader>(
+              input_textures, renderer, pass, p);
+        };
         break;
       default:
         FML_UNREACHABLE();
@@ -107,12 +106,10 @@ void BlendFilterContents::SetBlendMode(Entity::BlendMode blend_mode) {
   }
 }
 
-static bool BasicBlend(
-    const std::vector<std::tuple<std::shared_ptr<Texture>, Rect>>&
-        input_textures,
-    const ContentContext& renderer,
-    RenderPass& pass,
-    Entity::BlendMode basic_blend) {
+static bool BasicBlend(const std::vector<Contents::Snapshot>& input_textures,
+                       const ContentContext& renderer,
+                       RenderPass& pass,
+                       Entity::BlendMode basic_blend) {
   using VS = TextureBlendPipeline::VertexShader;
   using FS = TextureBlendPipeline::FragmentShader;
 
@@ -141,13 +138,14 @@ static bool BasicBlend(
   options.blend_mode = Entity::BlendMode::kSource;
   cmd.pipeline = renderer.GetTextureBlendPipeline(options);
   {
-    auto [texture, texture_rect] = input_textures[0];
-    FS::BindTextureSamplerSrc(cmd, texture, sampler);
+    auto input = input_textures[0];
+    FS::BindTextureSamplerSrc(cmd, input.texture, sampler);
 
     VS::FrameInfo frame_info;
-    frame_info.mvp = Matrix::MakeOrthographic(size) *
-                     Matrix::MakeTranslation(texture_rect.origin) *
-                     Matrix::MakeScale(texture_rect.size / Size(size));
+    frame_info.mvp =
+        Matrix::MakeOrthographic(size) *
+        Matrix::MakeTranslation(input.position) *
+        Matrix::MakeScale(Size(input.texture->GetSize()) / Size(size));
 
     auto uniform_view = host_buffer.EmplaceUniform(frame_info);
     VS::BindFrameInfo(cmd, uniform_view);
@@ -165,14 +163,14 @@ static bool BasicBlend(
 
   for (auto texture_i = input_textures.begin() + 1;
        texture_i < input_textures.end(); texture_i++) {
-    auto [texture, texture_rect] = *texture_i;
-    FS::BindTextureSamplerSrc(cmd, texture, sampler);
+    auto input = *texture_i;
+    FS::BindTextureSamplerSrc(cmd, input.texture, sampler);
 
     VS::FrameInfo frame_info;
     frame_info.mvp = frame_info.mvp =
         Matrix::MakeOrthographic(size) *
-        Matrix::MakeTranslation(texture_rect.origin) *
-        Matrix::MakeScale(texture_rect.size / Size(size));
+        Matrix::MakeTranslation(input.position) *
+        Matrix::MakeScale(Size(input.texture->GetSize()) / Size(size));
 
     auto uniform_view = host_buffer.EmplaceUniform(frame_info);
     VS::BindFrameInfo(cmd, uniform_view);
@@ -183,8 +181,7 @@ static bool BasicBlend(
 }
 
 bool BlendFilterContents::RenderFilter(
-    const std::vector<std::tuple<std::shared_ptr<Texture>, Rect>>&
-        input_textures,
+    const std::vector<Snapshot>& input_textures,
     const ContentContext& renderer,
     RenderPass& pass,
     const Matrix& transform) const {

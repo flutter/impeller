@@ -22,12 +22,10 @@ class DirectionalGaussianBlurFilterContents final : public FilterContents {
 
  private:
   // |FilterContents|
-  bool RenderFilter(
-      const std::vector<std::tuple<std::shared_ptr<Texture>, Rect>>&
-          input_textures,
-      const ContentContext& renderer,
-      RenderPass& pass,
-      const Matrix& transform) const override;
+  bool RenderFilter(const std::vector<Snapshot>& input_textures,
+                    const ContentContext& renderer,
+                    RenderPass& pass,
+                    const Matrix& transform) const override;
 
   Vector2 blur_vector_;
 

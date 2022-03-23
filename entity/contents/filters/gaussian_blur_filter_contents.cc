@@ -3,11 +3,13 @@
 // found in the LICENSE file.
 
 #include "impeller/entity/contents/filters/gaussian_blur_filter_contents.h"
+
 #include <valarray>
 
 #include "impeller/entity/contents/content_context.h"
 #include "impeller/entity/contents/filters/filter_contents.h"
 #include "impeller/geometry/rect.h"
+#include "impeller/geometry/scalar.h"
 #include "impeller/renderer/render_pass.h"
 #include "impeller/renderer/sampler_library.h"
 
@@ -20,16 +22,15 @@ DirectionalGaussianBlurFilterContents::
     ~DirectionalGaussianBlurFilterContents() = default;
 
 void DirectionalGaussianBlurFilterContents::SetBlurVector(Vector2 blur_vector) {
-  if (blur_vector.GetLengthSquared() < 1e-3f) {
-    blur_vector_ = Vector2(0, 1e-3f);
+  if (blur_vector.GetLengthSquared() < kEhCloseEnough) {
+    blur_vector_ = Vector2(0, kEhCloseEnough);
     return;
   }
   blur_vector_ = blur_vector;
 }
 
 bool DirectionalGaussianBlurFilterContents::RenderFilter(
-    const std::vector<std::tuple<std::shared_ptr<Texture>, Rect>>&
-        input_textures,
+    const std::vector<Snapshot>& input_textures,
     const ContentContext& renderer,
     RenderPass& pass,
     const Matrix& transform) const {

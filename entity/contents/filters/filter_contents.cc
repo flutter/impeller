@@ -84,26 +84,22 @@ void FilterContents::SetInputTextures(InputTextures input_textures) {
   input_textures_ = std::move(input_textures);
 }
 
-bool FilterContents::IsFilter() const {
-  return true;
-};
-
 bool FilterContents::Render(const ContentContext& renderer,
                             const Entity& entity,
                             RenderPass& pass) const {
   // Run the filter.
 
-  auto maybe_texture = RenderFilterToTexture(renderer, entity, pass);
-  if (!maybe_texture.has_value()) {
+  auto maybe_snapshot = RenderToTexture(renderer, entity);
+  if (!maybe_snapshot.has_value()) {
     return false;
   }
-  auto& texture = maybe_texture.value();
+  auto& snapshot = maybe_snapshot.value();
 
   // Draw the result texture, respecting the transform and clip stack.
 
   auto contents = std::make_shared<TextureContents>();
-  contents->SetTexture(texture);
-  contents->SetSourceRect(IRect::MakeSize(texture->GetSize()));
+  contents->SetTexture(snapshot.texture);
+  contents->SetSourceRect(IRect::MakeSize(snapshot.texture->GetSize()));
 
   Entity e;
   e.SetPath(PathBuilder{}.AddRect(GetBounds(entity)).GetCurrentPath());
@@ -149,91 +145,19 @@ Rect FilterContents::GetBounds(const Entity& entity) const {
   return result;
 }
 
-using SubpassCallback = std::function<bool(const ContentContext&, RenderPass&)>;
-
-static std::optional<std::shared_ptr<Texture>> MakeSubpass(
+static std::optional<Contents::Snapshot> ResolveSnapshotForInput(
     const ContentContext& renderer,
-    ISize texture_size,
-    SubpassCallback subpass_callback) {
-  auto context = renderer.GetContext();
-
-  auto subpass_target = RenderTarget::CreateOffscreen(*context, texture_size);
-  auto subpass_texture = subpass_target.GetRenderTargetTexture();
-  if (!subpass_texture) {
-    return std::nullopt;
-  }
-
-  auto sub_command_buffer = context->CreateRenderCommandBuffer();
-  sub_command_buffer->SetLabel("Offscreen Filter Command Buffer");
-  if (!sub_command_buffer) {
-    return std::nullopt;
-  }
-
-  auto sub_renderpass = sub_command_buffer->CreateRenderPass(subpass_target);
-  if (!sub_renderpass) {
-    return std::nullopt;
-  }
-  sub_renderpass->SetLabel("OffscreenFilterPass");
-
-  if (!subpass_callback(renderer, *sub_renderpass)) {
-    return std::nullopt;
-  }
-
-  if (!sub_renderpass->EncodeCommands(*context->GetTransientsAllocator())) {
-    return std::nullopt;
-  }
-
-  if (!sub_command_buffer->SubmitCommands()) {
-    return std::nullopt;
-  }
-
-  return subpass_texture;
-}
-
-static std::optional<std::tuple<std::shared_ptr<Texture>, Rect>>
-ResolveTextureForInput(const ContentContext& renderer,
-                       const Entity& entity,
-                       RenderPass& pass,
-                       const Rect& pass_bounds,
-                       FilterContents::InputVariant input) {
-  auto input_bounds = FilterContents::GetBoundsForInput(entity, input);
-  auto input_relative =
-      Rect(input_bounds.origin - pass_bounds.origin, input_bounds.size);
-
+    const Entity& entity,
+    FilterContents::InputVariant input) {
   if (auto contents = std::get_if<std::shared_ptr<Contents>>(&input)) {
-    // If the input is a filter, recurse.
-    if (contents->get()->IsFilter()) {
-      auto filter = std::static_pointer_cast<FilterContents>(*contents);
-      auto texture = filter->RenderFilterToTexture(renderer, entity, pass);
-      if (!texture.has_value()) {
-        return std::nullopt;
-      }
-      return std::make_tuple(texture.value(), input_relative);
-    }
-
-    // If the input is non-filter contents, render it into a texture.
-    auto texture = MakeSubpass(
-        renderer, ISize(input_relative.size),
-        [contents = *contents, entity, input_relative](
-            const ContentContext& renderer, RenderPass& pass) -> bool {
-          Entity sub_entity;
-          sub_entity.SetPath(entity.GetPath());
-          sub_entity.SetBlendMode(Entity::BlendMode::kSource);
-          sub_entity.SetTransformation(
-              Matrix::MakeTranslation(Vector3(-input_relative.origin)) *
-              entity.GetTransformation());
-          return contents->Render(renderer, sub_entity, pass);
-        });
-    if (!texture.has_value()) {
-      return std::nullopt;
-    }
-    return std::make_tuple(texture.value(), input_relative);
+    return contents->get()->RenderToTexture(renderer, entity);
   }
 
   if (auto input_texture = std::get_if<std::shared_ptr<Texture>>(&input)) {
+    auto input_bounds = FilterContents::GetBoundsForInput(entity, input);
     // If the input is a texture, render the version of it which is transformed.
-    auto texture = MakeSubpass(
-        renderer, ISize(input_relative.size),
+    auto texture = Contents::MakeSubpass(
+        renderer, ISize(input_bounds.size),
         [texture = *input_texture, entity, input_bounds](
             const ContentContext& renderer, RenderPass& pass) -> bool {
           TextureContents contents;
@@ -250,16 +174,17 @@ ResolveTextureForInput(const ContentContext& renderer,
     if (!texture.has_value()) {
       return std::nullopt;
     }
-    return std::make_tuple(texture.value(), input_relative);
+
+    return Contents::Snapshot{.texture = texture.value(),
+                              .position = input_bounds.origin};
   }
 
   FML_UNREACHABLE();
 }
 
-std::optional<std::shared_ptr<Texture>> FilterContents::RenderFilterToTexture(
+std::optional<Contents::Snapshot> FilterContents::RenderToTexture(
     const ContentContext& renderer,
-    const Entity& entity,
-    RenderPass& pass) const {
+    const Entity& entity) const {
   auto bounds = GetBounds(entity);
   if (bounds.IsZero()) {
     return std::nullopt;
@@ -267,27 +192,36 @@ std::optional<std::shared_ptr<Texture>> FilterContents::RenderFilterToTexture(
 
   // Resolve all inputs as textures.
 
-  std::vector<std::tuple<std::shared_ptr<Texture>, Rect>> input_textures;
+  std::vector<Snapshot> input_textures;
 
   input_textures.reserve(input_textures_.size());
   for (const auto& input : input_textures_) {
-    auto texture_and_offset =
-        ResolveTextureForInput(renderer, entity, pass, bounds, input);
+    auto texture_and_offset = ResolveSnapshotForInput(renderer, entity, input);
     if (!texture_and_offset.has_value()) {
       continue;
     }
+
+    // Make the position of all input snapshots relative to this filter's
+    // snapshot position.
+    texture_and_offset->position -= bounds.origin;
 
     input_textures.push_back(texture_and_offset.value());
   }
 
   // Create a new texture and render the filter to it.
 
-  return MakeSubpass(
+  auto texture = MakeSubpass(
       renderer, ISize(GetBounds(entity).size),
       [=](const ContentContext& renderer, RenderPass& pass) -> bool {
         return RenderFilter(input_textures, renderer, pass,
                             entity.GetTransformation());
       });
+
+  if (!texture.has_value()) {
+    return std::nullopt;
+  }
+
+  return Snapshot{.texture = texture.value(), .position = bounds.origin};
 }
 
 }  // namespace impeller
