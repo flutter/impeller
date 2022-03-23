@@ -12,7 +12,6 @@
 #include "impeller/geometry/matrix_decomposition.h"
 #include "impeller/geometry/point.h"
 #include "impeller/geometry/quaternion.h"
-#include "impeller/geometry/rect.h"
 #include "impeller/geometry/scalar.h"
 #include "impeller/geometry/shear.h"
 #include "impeller/geometry/size.h"
