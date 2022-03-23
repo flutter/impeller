@@ -125,7 +125,7 @@ Rect FilterContents::GetBoundsForInput(const Entity& entity,
     for (uint i = 0; i < points.size(); i++) {
       points[i] = transform * points[i];
     }
-    return Rect::MakePointBounds(points);
+    return Rect::MakePointBounds({points.begin(), points.end()});
   }
 
   FML_UNREACHABLE();

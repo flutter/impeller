@@ -37,7 +37,7 @@ Rect Contents::GetBounds(const Entity& entity) const {
   for (uint i = 0; i < points.size(); i++) {
     points[i] = transform * points[i];
   }
-  return Rect::MakePointBounds(points);
+  return Rect::MakePointBounds({points.begin(), points.end()});
 }
 
 }  // namespace impeller

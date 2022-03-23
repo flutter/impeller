@@ -284,8 +284,7 @@ struct Matrix {
   constexpr Vector4 TransformDirection(const Vector4& v) const {
     return Vector4(v.x * m[0] + v.y * m[4] + v.z * m[8],
                    v.x * m[1] + v.y * m[5] + v.z * m[9],
-                   v.x * m[2] + v.y * m[6] + v.z * m[10],
-                   v.x * m[3] + v.y * m[7] + v.z * m[11]);
+                   v.x * m[2] + v.y * m[6] + v.z * m[10], v.w);
   }
 
   constexpr Vector3 TransformDirection(const Vector3& v) const {
@@ -295,8 +294,7 @@ struct Matrix {
   }
 
   constexpr Vector2 TransformDirection(const Vector2& v) const {
-    return Vector2(v.x * m[0] + v.y * m[4],
-                   v.x * m[1] + v.y * m[5]);
+    return Vector2(v.x * m[0] + v.y * m[4], v.x * m[1] + v.y * m[5]);
   }
 
   template <class T>

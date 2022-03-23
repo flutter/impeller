@@ -51,16 +51,19 @@ struct TRect {
     return TRect(0.0, 0.0, size.width, size.height);
   }
 
-  constexpr static TRect MakePointBounds(const std::array<TPoint<Type>, 4>& p) {
-    auto left = p[0].x;
-    auto top = p[0].y;
-    auto right = p[0].x;
-    auto bottom = p[0].y;
-    for (uint i = 1; i < 4; i++) {
-      left = std::min(left, p[i].x);
-      top = std::min(top, p[i].y);
-      right = std::max(right, p[i].x);
-      bottom = std::max(bottom, p[i].y);
+  constexpr static TRect MakePointBounds(
+      const std::vector<TPoint<Type>>& points) {
+    auto left = points[0].x;
+    auto top = points[0].y;
+    auto right = points[0].x;
+    auto bottom = points[0].y;
+    if (points.size() > 1) {
+      for (uint i = 1; i < points.size(); i++) {
+        left = std::min(left, points[i].x);
+        top = std::min(top, points[i].y);
+        right = std::max(right, points[i].x);
+        bottom = std::max(bottom, points[i].y);
+      }
     }
     return TRect::MakeLTRB(left, top, right, bottom);
   }
