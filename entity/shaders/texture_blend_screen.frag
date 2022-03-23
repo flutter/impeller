@@ -5,9 +5,8 @@
 uniform sampler2D texture_sampler_dst;
 uniform sampler2D texture_sampler_src;
 
-in vec2 v_texture_coords;
-in vec2 v_dst_uv_offset;
-in vec2 v_src_uv_offset;
+in vec2 v_dst_texture_coords;
+in vec2 v_src_texture_coords;
 
 out vec4 frag_color;
 
@@ -20,9 +19,7 @@ vec4 SampleWithBorder(sampler2D tex, vec2 uv) {
 }
 
 void main() {
-  vec4 dst =
-      SampleWithBorder(texture_sampler_dst, v_texture_coords + v_dst_uv_offset);
-  vec4 src =
-      SampleWithBorder(texture_sampler_src, v_texture_coords + v_src_uv_offset);
+  vec4 dst = SampleWithBorder(texture_sampler_dst, v_dst_texture_coords);
+  vec4 src = SampleWithBorder(texture_sampler_src, v_src_texture_coords);
   frag_color = src + dst - src * dst;
 }

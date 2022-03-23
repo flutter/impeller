@@ -21,7 +21,7 @@ using PipelineProc =
 
 template <typename VS, typename FS>
 static bool AdvancedBlend(
-    const std::vector<std::tuple<std::shared_ptr<Texture>, Point>>&
+    const std::vector<std::tuple<std::shared_ptr<Texture>, Rect>>&
         input_textures,
     const ContentContext& renderer,
     RenderPass& pass,
@@ -58,13 +58,17 @@ static bool AdvancedBlend(
   typename VS::FrameInfo frame_info;
   frame_info.mvp = Matrix::MakeOrthographic(size);
 
-  auto [dst_texture, dst_offset] = input_textures[1];
+  auto [dst_texture, dst_rect] = input_textures[1];
   FS::BindTextureSamplerSrc(cmd, dst_texture, sampler);
-  frame_info.dst_uv_offset = dst_offset / size;
+  frame_info.dst_uv_transform =
+      Matrix::MakeTranslation(-dst_rect.origin / size) *
+      Matrix::MakeScale(Vector3(Size(size) / dst_rect.size));
 
-  auto [src_texture, src_offset] = input_textures[0];
+  auto [src_texture, src_rect] = input_textures[0];
   FS::BindTextureSamplerDst(cmd, src_texture, sampler);
-  frame_info.src_uv_offset = src_offset / size;
+  frame_info.src_uv_transform =
+      Matrix::MakeTranslation(-src_rect.origin / size) *
+      Matrix::MakeScale(Vector3(Size(size) / src_rect.size));
 
   auto uniform_view = host_buffer.EmplaceUniform(frame_info);
   VS::BindFrameInfo(cmd, uniform_view);
@@ -88,7 +92,7 @@ void BlendFilterContents::SetBlendMode(Entity::BlendMode blend_mode) {
     switch (blend_mode) {
       case Entity::BlendMode::kScreen:
         advanced_blend_proc_ =
-            [](const std::vector<std::tuple<std::shared_ptr<Texture>, Point>>&
+            [](const std::vector<std::tuple<std::shared_ptr<Texture>, Rect>>&
                    input_textures,
                const ContentContext& renderer, RenderPass& pass) {
               PipelineProc p = &ContentContext::GetTextureBlendScreenPipeline;
@@ -104,7 +108,7 @@ void BlendFilterContents::SetBlendMode(Entity::BlendMode blend_mode) {
 }
 
 static bool BasicBlend(
-    const std::vector<std::tuple<std::shared_ptr<Texture>, Point>>&
+    const std::vector<std::tuple<std::shared_ptr<Texture>, Rect>>&
         input_textures,
     const ContentContext& renderer,
     RenderPass& pass,
@@ -137,12 +141,13 @@ static bool BasicBlend(
   options.blend_mode = Entity::BlendMode::kSource;
   cmd.pipeline = renderer.GetTextureBlendPipeline(options);
   {
-    auto [texture, offset] = input_textures[0];
+    auto [texture, texture_rect] = input_textures[0];
     FS::BindTextureSamplerSrc(cmd, texture, sampler);
 
     VS::FrameInfo frame_info;
-    frame_info.mvp =
-        Matrix::MakeTranslation(offset) * Matrix::MakeOrthographic(size);
+    frame_info.mvp = Matrix::MakeOrthographic(size) *
+                     Matrix::MakeTranslation(texture_rect.origin) *
+                     Matrix::MakeScale(texture_rect.size / Size(size));
 
     auto uniform_view = host_buffer.EmplaceUniform(frame_info);
     VS::BindFrameInfo(cmd, uniform_view);
@@ -160,12 +165,14 @@ static bool BasicBlend(
 
   for (auto texture_i = input_textures.begin() + 1;
        texture_i < input_textures.end(); texture_i++) {
-    auto [texture, offset] = *texture_i;
+    auto [texture, texture_rect] = *texture_i;
     FS::BindTextureSamplerSrc(cmd, texture, sampler);
 
     VS::FrameInfo frame_info;
-    frame_info.mvp =
-        Matrix::MakeTranslation(offset) * Matrix::MakeOrthographic(size);
+    frame_info.mvp = frame_info.mvp =
+        Matrix::MakeOrthographic(size) *
+        Matrix::MakeTranslation(texture_rect.origin) *
+        Matrix::MakeScale(texture_rect.size / Size(size));
 
     auto uniform_view = host_buffer.EmplaceUniform(frame_info);
     VS::BindFrameInfo(cmd, uniform_view);
@@ -176,10 +183,11 @@ static bool BasicBlend(
 }
 
 bool BlendFilterContents::RenderFilter(
-    const std::vector<std::tuple<std::shared_ptr<Texture>, Point>>&
+    const std::vector<std::tuple<std::shared_ptr<Texture>, Rect>>&
         input_textures,
     const ContentContext& renderer,
-    RenderPass& pass) const {
+    RenderPass& pass,
+    const Matrix& transform) const {
   if (input_textures.empty()) {
     return true;
   }

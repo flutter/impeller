@@ -53,8 +53,8 @@ struct TRect {
 
   constexpr static TRect MakePointBounds(const std::array<TPoint<Type>, 4>& p) {
     auto left = p[0].x;
-    auto top = p[0].x;
-    auto right = p[0].y;
+    auto top = p[0].y;
+    auto right = p[0].x;
     auto bottom = p[0].y;
     for (uint i = 1; i < 4; i++) {
       left = std::min(left, p[i].x);

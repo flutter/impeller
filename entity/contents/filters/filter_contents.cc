@@ -119,8 +119,7 @@ Rect FilterContents::GetBoundsForInput(const Entity& entity,
   }
 
   if (auto texture = std::get_if<std::shared_ptr<Texture>>(&input)) {
-    auto size = Size(texture->get()->GetSize());
-    auto points = Rect::MakeSize(size).GetPoints();
+    auto points = entity.GetPath().GetBoundingBox()->GetPoints();
 
     const auto& transform = entity.GetTransformation();
     for (uint i = 0; i < points.size(); i++) {
@@ -191,14 +190,15 @@ static std::optional<std::shared_ptr<Texture>> MakeSubpass(
   return subpass_texture;
 }
 
-static std::optional<std::tuple<std::shared_ptr<Texture>, Point>>
+static std::optional<std::tuple<std::shared_ptr<Texture>, Rect>>
 ResolveTextureForInput(const ContentContext& renderer,
                        const Entity& entity,
                        RenderPass& pass,
-                       Size pass_size,
+                       const Rect& pass_bounds,
                        FilterContents::InputVariant input) {
   auto input_bounds = FilterContents::GetBoundsForInput(entity, input);
-  Point draw_offset = input_bounds.origin - input_bounds.origin;
+  auto input_relative =
+      Rect(input_bounds.origin - pass_bounds.origin, input_bounds.size);
 
   if (auto contents = std::get_if<std::shared_ptr<Contents>>(&input)) {
     // If the input is a filter, recurse.
@@ -208,30 +208,49 @@ ResolveTextureForInput(const ContentContext& renderer,
       if (!texture.has_value()) {
         return std::nullopt;
       }
-      return std::make_tuple(texture.value(), draw_offset);
+      return std::make_tuple(texture.value(), input_relative);
     }
 
     // If the input is non-filter contents, render it into a texture.
     auto texture = MakeSubpass(
-        renderer, ISize(input_bounds.size),
-        [contents = *contents, entity, input_bounds](
+        renderer, ISize(input_relative.size),
+        [contents = *contents, entity, input_relative](
             const ContentContext& renderer, RenderPass& pass) -> bool {
+          Entity sub_entity;
+          sub_entity.SetPath(entity.GetPath());
+          sub_entity.SetBlendMode(Entity::BlendMode::kSource);
+          sub_entity.SetTransformation(
+              Matrix::MakeTranslation(Vector3(-input_relative.origin)) *
+              entity.GetTransformation());
+          return contents->Render(renderer, sub_entity, pass);
+        });
+    if (!texture.has_value()) {
+      return std::nullopt;
+    }
+    return std::make_tuple(texture.value(), input_relative);
+  }
+
+  if (auto input_texture = std::get_if<std::shared_ptr<Texture>>(&input)) {
+    // If the input is a texture, render the version of it which is transformed.
+    auto texture = MakeSubpass(
+        renderer, ISize(input_relative.size),
+        [texture = *input_texture, entity, input_bounds](
+            const ContentContext& renderer, RenderPass& pass) -> bool {
+          TextureContents contents;
+          contents.SetTexture(texture);
+          contents.SetSourceRect(IRect::MakeSize(texture->GetSize()));
           Entity sub_entity;
           sub_entity.SetPath(entity.GetPath());
           sub_entity.SetBlendMode(Entity::BlendMode::kSource);
           sub_entity.SetTransformation(
               Matrix::MakeTranslation(Vector3(-input_bounds.origin)) *
               entity.GetTransformation());
-          return contents->Render(renderer, entity, pass);
+          return contents.Render(renderer, sub_entity, pass);
         });
     if (!texture.has_value()) {
       return std::nullopt;
     }
-    return std::make_tuple(texture.value(), draw_offset);
-  }
-
-  if (auto texture = std::get_if<std::shared_ptr<Texture>>(&input)) {
-    return std::make_tuple(*texture, draw_offset);
+    return std::make_tuple(texture.value(), input_relative);
   }
 
   FML_UNREACHABLE();
@@ -248,12 +267,12 @@ std::optional<std::shared_ptr<Texture>> FilterContents::RenderFilterToTexture(
 
   // Resolve all inputs as textures.
 
-  std::vector<std::tuple<std::shared_ptr<Texture>, Point>> input_textures;
+  std::vector<std::tuple<std::shared_ptr<Texture>, Rect>> input_textures;
 
   input_textures.reserve(input_textures_.size());
   for (const auto& input : input_textures_) {
     auto texture_and_offset =
-        ResolveTextureForInput(renderer, entity, pass, bounds.size, input);
+        ResolveTextureForInput(renderer, entity, pass, bounds, input);
     if (!texture_and_offset.has_value()) {
       continue;
     }
@@ -266,7 +285,8 @@ std::optional<std::shared_ptr<Texture>> FilterContents::RenderFilterToTexture(
   return MakeSubpass(
       renderer, ISize(GetBounds(entity).size),
       [=](const ContentContext& renderer, RenderPass& pass) -> bool {
-        return RenderFilter(input_textures, renderer, pass);
+        return RenderFilter(input_textures, renderer, pass,
+                            entity.GetTransformation());
       });
 }
 

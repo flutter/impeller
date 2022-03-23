@@ -69,10 +69,11 @@ class FilterContents : public Contents {
   /// @brief Takes a set of zero or more input textures and writes to an output
   ///        texture.
   virtual bool RenderFilter(
-      const std::vector<std::tuple<std::shared_ptr<Texture>, Point>>&
+      const std::vector<std::tuple<std::shared_ptr<Texture>, Rect>>&
           input_textures,
       const ContentContext& renderer,
-      RenderPass& pass) const = 0;
+      RenderPass& pass,
+      const Matrix& transform) const = 0;
 
   InputTextures input_textures_;
   Rect destination_;

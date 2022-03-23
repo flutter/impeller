@@ -687,13 +687,16 @@ TEST_F(EntityTest, GaussianBlurFilter) {
 
     ImGui::Begin("Controls");
     static float offset[2] = {500, 400};
-    ImGui::SliderFloat2("Position offset", &offset[0], 0, 1000);
-    static float scale = 1;
-    ImGui::SliderFloat("Scale", &scale, 0, 1);
+    ImGui::SliderFloat2("Translation", &offset[0], 0,
+                        pass.GetRenderTargetSize().width);
+    static float rotation = 0;
+    ImGui::SliderFloat("Rotation", &rotation, 0, kPi * 2);
+    static float scale[2] = {1, 1};
+    ImGui::SliderFloat2("Scale", &scale[0], 0, 3);
+    static float skew[2] = {0, 0};
+    ImGui::SliderFloat2("Skew", &skew[0], -3, 3);
     static float blur_amount[2] = {20, 20};
     ImGui::SliderFloat2("Blur", &blur_amount[0], 0, 200);
-    static bool clip_border = true;
-    ImGui::Checkbox("Clip", &clip_border);
     ImGui::End();
 
     auto blend = FilterContents::MakeBlend(Entity::BlendMode::kPlus,
@@ -702,14 +705,23 @@ TEST_F(EntityTest, GaussianBlurFilter) {
     auto blur =
         FilterContents::MakeGaussianBlur(blend, blur_amount[0], blur_amount[1]);
 
-    // auto output_size = blur->GetBounds(entity).size;
-    // Rect bounds(Point(offset[0], offset[1]) - output_size / 2 * scale,
-    //             output_size * scale);
+    auto rect = Rect(-Point(boston->GetSize()) / 2, Size(boston->GetSize()));
+    auto ctm = Matrix::MakeTranslation(Vector3(offset[0], offset[1])) *
+               Matrix::MakeRotation(rotation, Vector4(0, 0, 1, 1)) *
+               Matrix::MakeScale(Vector3(scale[0], scale[1])) *
+               Matrix::MakeSkew(skew[0], skew[1]);
 
     Entity entity;
-    entity.SetPath(PathBuilder{}.AddRect(Rect(100, 100, 300, 300)).TakePath());
+    entity.SetPath(PathBuilder{}.AddRect(rect).TakePath());
     entity.SetContents(blur);
-    return entity.Render(context, pass);
+    entity.SetTransformation(ctm);
+
+    Entity cover_entity;
+    cover_entity.SetPath(PathBuilder{}.AddRect(rect).TakePath());
+    cover_entity.SetContents(SolidColorContents::Make(Color(1, 0, 0, 0.5)));
+    cover_entity.SetTransformation(ctm);
+
+    return entity.Render(context, pass) && cover_entity.Render(context, pass);
   };
   ASSERT_TRUE(OpenPlaygroundHere(callback));
 }
