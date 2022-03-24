@@ -272,7 +272,7 @@ void Canvas::Save(bool create_subpass) {
 void Canvas::DrawTextFrame(TextFrame text_frame, Point position, Paint paint) {
   auto lazy_glyph_atlas = GetCurrentPass().GetLazyGlyphAtlas();
 
-  lazy_glyph_atlas->AddTextFrame(std::move(text_frame));
+  lazy_glyph_atlas->AddTextFrame(text_frame);
 
   auto text_contents = std::make_shared<TextContents>();
   text_contents->SetTextFrame(std::move(text_frame));

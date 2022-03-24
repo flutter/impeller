@@ -65,7 +65,7 @@ static bool PairsFitInAtlasOfSize(const FontGlyphPair::Vector& pairs,
 
   for (const auto& pair : pairs) {
     const auto glyph_size =
-        ISize::Ceil(pair.font.GetMetrics().GetBoundingBox().size);
+        ISize::Ceil(pair.font.GetMetricsNormalized().GetBoundingBox().size);
     SkIPoint16 location_in_atlas;
     if (!rect_packer->addRect(glyph_size.width,   //
                               glyph_size.height,  //
@@ -125,9 +125,9 @@ static std::optional<SkBitmap> CreateAtlasBitmap(const GlyphAtlas& atlas,
 
     SkFont sk_font(
         TypefaceSkia::Cast(*font_glyph.font.GetTypeface()).GetSkiaTypeface(),
-        font_glyph.font.GetMetrics().point_size);
+        font_glyph.font.GetMetricsNormalized().point_size);
 
-    const auto& metrics = font_glyph.font.GetMetrics();
+    const auto& metrics = font_glyph.font.GetMetricsNormalized();
 
     auto glyph_color = SK_ColorWHITE;
 

@@ -68,6 +68,8 @@ class TextRun {
   ///
   const Font& GetFont() const;
 
+  void ScaleFont(Scalar scale);
+
  private:
   Font font_;
   std::vector<GlyphPosition> glyphs_;

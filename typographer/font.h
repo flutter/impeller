@@ -28,6 +28,7 @@ class Font : public Comparable<Font> {
   ///             the baseline with an upper-left-origin coordinate system.
   ///
   struct Metrics {
+    Scalar scale = 1.0f;
     //--------------------------------------------------------------------------
     /// The point size of the font.
     ///
@@ -69,9 +70,9 @@ class Font : public Comparable<Font> {
     }
 
     constexpr bool operator==(const Metrics& o) const {
-      return point_size == o.point_size && ascent == o.ascent &&
-             descent == o.descent && min_extent == o.min_extent &&
-             max_extent == o.max_extent;
+      return scale == o.scale && point_size == o.point_size &&
+             ascent == o.ascent && descent == o.descent &&
+             min_extent == o.min_extent && max_extent == o.max_extent;
     }
   };
 
@@ -88,7 +89,11 @@ class Font : public Comparable<Font> {
   ///
   const std::shared_ptr<Typeface>& GetTypeface() const;
 
+  Metrics GetMetricsNormalized() const;
+
   const Metrics& GetMetrics() const;
+
+  void ScaleMetrics(Scalar scale);
 
   // |Comparable<Font>|
   std::size_t GetHash() const override;
@@ -107,6 +112,6 @@ class Font : public Comparable<Font> {
 template <>
 struct std::hash<impeller::Font::Metrics> {
   constexpr std::size_t operator()(const impeller::Font::Metrics& m) const {
-    return fml::HashCombine(m.point_size, m.ascent, m.descent);
+    return fml::HashCombine(m.scale, m.point_size, m.ascent, m.descent);
   }
 };

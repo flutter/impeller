@@ -26,4 +26,10 @@ const std::vector<TextRun>& TextFrame::GetRuns() const {
   return runs_;
 }
 
+void TextFrame::ScaleFonts(Scalar scale) {
+  for (auto& run : runs_) {
+    run.ScaleFont(scale);
+  }
+}
+
 }  // namespace impeller
