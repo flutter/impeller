@@ -104,11 +104,11 @@ bool TextureContents::Render(const ContentContext& renderer,
   return true;
 }
 
-void TextureContents::SetSourceRect(const IRect& source_rect) {
+void TextureContents::SetSourceRect(const Rect& source_rect) {
   source_rect_ = source_rect;
 }
 
-const IRect& TextureContents::GetSourceRect() const {
+const Rect& TextureContents::GetSourceRect() const {
   return source_rect_;
 }
 

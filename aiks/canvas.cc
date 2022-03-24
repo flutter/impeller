@@ -205,7 +205,7 @@ void Canvas::DrawImage(std::shared_ptr<Image> image,
     return;
   }
 
-  const auto source = IRect::MakeSize(image->GetSize());
+  const auto source = Rect::MakeSize(Size(image->GetSize()));
   const auto dest =
       Rect::MakeXYWH(offset.x, offset.y, source.size.width, source.size.height);
 
@@ -213,7 +213,7 @@ void Canvas::DrawImage(std::shared_ptr<Image> image,
 }
 
 void Canvas::DrawImageRect(std::shared_ptr<Image> image,
-                           IRect source,
+                           Rect source,
                            Rect dest,
                            Paint paint) {
   if (!image || source.size.IsEmpty() || dest.size.IsEmpty()) {
@@ -233,6 +233,7 @@ void Canvas::DrawImageRect(std::shared_ptr<Image> image,
   Entity entity;
   entity.SetPath(PathBuilder{}.AddRect(dest).TakePath());
   entity.SetBlendMode(paint.blend_mode);
+  entity.SetStencilDepth(GetStencilDepth());
   entity.SetContents(contents);
   entity.SetTransformation(GetCurrentTransformation());
 

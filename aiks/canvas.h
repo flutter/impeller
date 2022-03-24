@@ -68,7 +68,7 @@ class Canvas {
   void DrawImage(std::shared_ptr<Image> image, Point offset, Paint paint);
 
   void DrawImageRect(std::shared_ptr<Image> image,
-                     IRect source,
+                     Rect source,
                      Rect dest,
                      Paint paint);
 
