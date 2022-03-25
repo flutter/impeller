@@ -46,8 +46,8 @@ class TextContents final : public Contents {
                        std::shared_ptr<LazyGlyphAtlas>>
       atlas_;
 
-  std::shared_ptr<GlyphAtlas> ResolveAtlas(std::shared_ptr<Context> context,
-                                           Scalar font_scale) const;
+  std::shared_ptr<GlyphAtlas> ResolveAtlas(
+      std::shared_ptr<Context> context) const;
 
   FML_DISALLOW_COPY_AND_ASSIGN(TextContents);
 };

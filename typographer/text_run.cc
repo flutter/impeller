@@ -36,8 +36,4 @@ const Font& TextRun::GetFont() const {
   return font_;
 }
 
-void TextRun::ScaleFont(Scalar scale) {
-  font_.ScaleMetrics(scale);
-}
-
 }  // namespace impeller

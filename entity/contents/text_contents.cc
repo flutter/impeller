@@ -4,7 +4,6 @@
 
 #include "impeller/entity/contents/text_contents.h"
 
-#include "fml/logging.h"
 #include "impeller/entity/contents/content_context.h"
 #include "impeller/entity/entity.h"
 #include "impeller/geometry/path_builder.h"
@@ -33,11 +32,9 @@ void TextContents::SetGlyphAtlas(std::shared_ptr<LazyGlyphAtlas> atlas) {
 }
 
 std::shared_ptr<GlyphAtlas> TextContents::ResolveAtlas(
-    std::shared_ptr<Context> context,
-    Scalar font_scale) const {
+    std::shared_ptr<Context> context) const {
   if (auto lazy_atlas = std::get_if<std::shared_ptr<LazyGlyphAtlas>>(&atlas_)) {
-    auto atlas = lazy_atlas->get()->CreateOrGetGlyphAtlas(context, font_scale);
-    return atlas;
+    return lazy_atlas->get()->CreateOrGetGlyphAtlas(context);
   }
 
   if (auto atlas = std::get_if<std::shared_ptr<GlyphAtlas>>(&atlas_)) {
@@ -58,9 +55,7 @@ bool TextContents::Render(const ContentContext& renderer,
     return true;
   }
 
-  //Scalar font_scale = entity.GetTransformation().GetMaxBasisLength();
-
-  auto atlas = ResolveAtlas(renderer.GetContext(), 1);
+  auto atlas = ResolveAtlas(renderer.GetContext());
 
   if (!atlas || !atlas->IsValid()) {
     VALIDATION_LOG << "Cannot render glyphs without prepared atlas.";
@@ -132,30 +127,13 @@ bool TextContents::Render(const ContentContext& renderer,
 
   for (const auto& run : frame_.GetRuns()) {
     auto font = run.GetFont();
-    //font.ScaleMetrics(font_scale);
-
     auto glyph_size = ISize::Ceil(font.GetMetrics().GetBoundingBox().size);
     for (const auto& glyph_position : run.GetGlyphPositions()) {
       FontGlyphPair font_glyph_pair{font, glyph_position.glyph};
       auto atlas_glyph_pos = atlas->FindFontGlyphPosition(font_glyph_pair);
       if (!atlas_glyph_pos.has_value()) {
-        // TODO(100729): It's possible for this to happen sometimes due to our
-        // method of scaling and the way hashes are calculated. In particular,
-        // glyphs with animated rotation are running into this often. See the
-        // bug for more details about how to reproduce this in gallery.
-        FML_DLOG(ERROR) << "Glyph lookup failed."
-                        << "\n    Glyph index: " << glyph_position.glyph.index
-                        << "\n    scale: " << font.GetMetrics().scale
-                        << "\n    point_size: " << font.GetMetrics().point_size
-                        << "\n    ascent: " << font.GetMetrics().ascent
-                        << "\n    descent: " << font.GetMetrics().descent
-                        << "\n    min_extent: "
-                        << font.GetMetrics().min_extent.x << " "
-                        << font.GetMetrics().min_extent.y
-                        << "\n    max_extent: "
-                        << font.GetMetrics().max_extent.x << " "
-                        << font.GetMetrics().max_extent.y;
-        continue;
+        VALIDATION_LOG << "Could not find glyph position in the atlas.";
+        return false;
       }
       instance_count++;
       glyph_positions.emplace_back(glyph_position.position.Translate(

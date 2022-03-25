@@ -28,6 +28,11 @@ class Font : public Comparable<Font> {
   ///             the baseline with an upper-left-origin coordinate system.
   ///
   struct Metrics {
+    //--------------------------------------------------------------------------
+    /// The scaling factor that should be used when rendering this font to an
+    /// atlas. This should normally be set in accordance with the transformation
+    /// matrix that will be used to position glyph geometry.
+    ///
     Scalar scale = 1.0f;
     //--------------------------------------------------------------------------
     /// The point size of the font.
@@ -89,11 +94,7 @@ class Font : public Comparable<Font> {
   ///
   const std::shared_ptr<Typeface>& GetTypeface() const;
 
-  Metrics GetMetricsNormalized() const;
-
   const Metrics& GetMetrics() const;
-
-  void ScaleMetrics(Scalar scale);
 
   // |Comparable<Font>|
   std::size_t GetHash() const override;

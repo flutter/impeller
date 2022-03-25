@@ -19,8 +19,7 @@ void LazyGlyphAtlas::AddTextFrame(TextFrame frame) {
 }
 
 std::shared_ptr<GlyphAtlas> LazyGlyphAtlas::CreateOrGetGlyphAtlas(
-    std::shared_ptr<Context> context,
-    Scalar font_scale) const {
+    std::shared_ptr<Context> context) const {
   if (atlas_) {
     return atlas_;
   }

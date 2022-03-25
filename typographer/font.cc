@@ -34,23 +34,8 @@ bool Font::IsEqual(const Font& other) const {
          is_valid_ == other.is_valid_ && metrics_ == other.metrics_;
 }
 
-Font::Metrics Font::GetMetricsNormalized() const {
-  Metrics metrics = metrics_;
-  metrics.scale = 1.0f;
-  metrics.point_size *= metrics_.scale;
-  metrics.ascent *= metrics_.scale;
-  metrics.descent *= metrics_.scale;
-  metrics.min_extent *= metrics_.scale;
-  metrics.max_extent *= metrics_.scale;
-  return metrics;
-}
-
 const Font::Metrics& Font::GetMetrics() const {
   return metrics_;
-}
-
-void Font::ScaleMetrics(Scalar scale) {
-  metrics_.scale = scale;
 }
 
 }  // namespace impeller

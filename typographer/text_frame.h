@@ -44,8 +44,6 @@ class TextFrame {
   ///
   const std::vector<TextRun>& GetRuns() const;
 
-  void ScaleFonts(Scalar scale);
-
  private:
   std::vector<TextRun> runs_;
 };
