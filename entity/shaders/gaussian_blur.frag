@@ -5,16 +5,21 @@
 // 1D (directional) gaussian blur.
 //
 // Paths for future optimization:
-//   * Remove the uv bounds check branch in SampleColor by adding optional
+//   * Remove the uv bounds multiplier in SampleColor by adding optional
 //     support for SamplerAddressMode::ClampToBorder in the texture sampler.
 //   * Sample from higher mipmap levels when the blur radius is high enough.
 
 uniform sampler2D texture_sampler;
+uniform sampler2D alpha_mask_sampler;
 
 in vec2 v_texture_coords;
+in vec2 v_src_texture_coords;
 in vec2 v_texture_size;
 in vec2 v_blur_direction;
 in float v_blur_radius;
+in float v_src_factor;
+in float v_inner_blur_factor;
+in float v_outer_blur_factor;
 
 out vec4 frag_color;
 
@@ -27,11 +32,9 @@ float Gaussian(float x) {
 }
 
 // Emulate SamplerAddressMode::ClampToBorder.
-vec4 SampleWithBorder(vec2 uv) {
-  if (uv.x > 0 && uv.y > 0 && uv.x < 1 && uv.y < 1) {
-    return texture(texture_sampler, uv);
-  }
-  return vec4(0);
+vec4 SampleWithBorder(sampler2D tex, vec2 uv) {
+  float within_bounds = float(uv.x > 0 && uv.y > 0 && uv.x < 1 && uv.y < 1);
+  return texture(tex, uv) * within_bounds;
 }
 
 void main() {
@@ -40,8 +43,18 @@ void main() {
   for (float i = -v_blur_radius; i <= v_blur_radius; i++) {
     float gaussian = Gaussian(i);
     total_gaussian += gaussian;
-    total += gaussian * SampleWithBorder(v_texture_coords +
-                                         v_blur_direction * i / v_texture_size);
+    total +=
+        gaussian * SampleWithBorder(texture_sampler,
+                                    v_texture_coords +
+                                        v_blur_direction * i / v_texture_size);
   }
-  frag_color = total / total_gaussian;
+
+  vec4 blur_color = total / total_gaussian;
+
+  vec4 src_color = SampleWithBorder(alpha_mask_sampler, v_src_texture_coords);
+  float blur_factor = v_inner_blur_factor * src_color.a +
+                      v_outer_blur_factor * (1.0 - src_color.a);
+
+  frag_color =
+      blur_color * blur_factor + src_color * v_src_factor * src_color.a;
 }
