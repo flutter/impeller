@@ -30,11 +30,12 @@ void DirectionalGaussianBlurFilterContents::SetBlurVector(Vector2 blur_vector) {
 }
 
 bool DirectionalGaussianBlurFilterContents::RenderFilter(
-    const std::vector<Snapshot>& input_textures,
+    const FilterInput::Vector& inputs,
     const ContentContext& renderer,
+    const Entity& entity,
     RenderPass& pass,
-    const Matrix& transform) const {
-  if (input_textures.empty()) {
+    const Rect& bounds) const {
+  if (inputs.empty()) {
     return true;
   }
 
@@ -50,7 +51,8 @@ bool DirectionalGaussianBlurFilterContents::RenderFilter(
   // BlendFilterContents).
 
   auto size = pass.GetRenderTargetSize();
-  auto transformed_blur = transform.TransformDirection(blur_vector_);
+  auto transformed_blur =
+      entity.GetTransformation().TransformDirection(blur_vector_);
   auto uv_offset = transformed_blur.Abs() / size;
 
   // LTRB
@@ -86,8 +88,8 @@ bool DirectionalGaussianBlurFilterContents::RenderFilter(
   cmd.pipeline = renderer.GetGaussianBlurPipeline(options);
   cmd.BindVertices(vtx_buffer);
 
-  const auto& [texture, _] = input_textures[0];
-  FS::BindTextureSampler(cmd, texture, sampler);
+  auto input = inputs[0]->GetSnapshot(renderer, entity);
+  FS::BindTextureSampler(cmd, input->texture, sampler);
 
   frame_info.mvp = Matrix::MakeOrthographic(size);
   auto uniform_view = host_buffer.EmplaceUniform(frame_info);

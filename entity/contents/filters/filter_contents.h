@@ -55,10 +55,11 @@ class FilterContents : public Contents {
  private:
   /// @brief Takes a set of zero or more input textures and writes to an output
   ///        texture.
-  virtual bool RenderFilter(const std::vector<Snapshot>& input_textures,
+  virtual bool RenderFilter(const FilterInput::Vector& inputs,
                             const ContentContext& renderer,
+                            const Entity& entity,
                             RenderPass& pass,
-                            const Matrix& transform) const = 0;
+                            const Rect& bounds) const = 0;
 
   FilterInput::Vector inputs_;
   Rect destination_;

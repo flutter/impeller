@@ -175,31 +175,11 @@ std::optional<Snapshot> FilterContents::RenderToTexture(
     return std::nullopt;
   }
 
-  // Resolve all inputs as textures.
-
-  std::vector<Snapshot> input_textures;
-
-  input_textures.reserve(inputs_.size());
-  for (const auto& input : inputs_) {
-    auto texture_and_offset = input->GetSnapshot(renderer, entity);
-    if (!texture_and_offset.has_value()) {
-      continue;
-    }
-
-    // Make the position of all input snapshots relative to this filter's
-    // snapshot position.
-    texture_and_offset->position -= bounds.origin;
-
-    input_textures.push_back(texture_and_offset.value());
-  }
-
-  // Create a new texture and render the filter to it.
-
+  // Render the filter into a new texture.
   auto texture = renderer.MakeSubpass(
       ISize(GetBounds(entity).size),
       [=](const ContentContext& renderer, RenderPass& pass) -> bool {
-        return RenderFilter(input_textures, renderer, pass,
-                            entity.GetTransformation());
+        return RenderFilter(inputs_, renderer, entity, pass, bounds);
       });
 
   if (!texture.has_value()) {
