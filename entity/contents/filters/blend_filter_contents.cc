@@ -20,7 +20,7 @@ using PipelineProc =
     std::shared_ptr<Pipeline> (ContentContext::*)(ContentContextOptions) const;
 
 template <typename VS, typename FS>
-static bool AdvancedBlend(const std::vector<Contents::Snapshot>& input_textures,
+static bool AdvancedBlend(const std::vector<Snapshot>& input_textures,
                           const ContentContext& renderer,
                           RenderPass& pass,
                           PipelineProc pipeline_proc) {
@@ -106,7 +106,7 @@ void BlendFilterContents::SetBlendMode(Entity::BlendMode blend_mode) {
   }
 }
 
-static bool BasicBlend(const std::vector<Contents::Snapshot>& input_textures,
+static bool BasicBlend(const std::vector<Snapshot>& input_textures,
                        const ContentContext& renderer,
                        RenderPass& pass,
                        Entity::BlendMode basic_blend) {

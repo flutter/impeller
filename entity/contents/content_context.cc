@@ -5,6 +5,9 @@
 #include "impeller/entity/contents/content_context.h"
 
 #include <sstream>
+#include "impeller/renderer/command_buffer.h"
+#include "impeller/renderer/render_pass.h"
+#include "impeller/renderer/render_target.h"
 
 namespace impeller {
 
@@ -58,6 +61,44 @@ ContentContext::~ContentContext() = default;
 
 bool ContentContext::IsValid() const {
   return is_valid_;
+}
+
+std::optional<std::shared_ptr<Texture>> ContentContext::MakeSubpass(
+    ISize texture_size,
+    SubpassCallback subpass_callback) const {
+  auto context = GetContext();
+
+  auto subpass_target = RenderTarget::CreateOffscreen(*context, texture_size);
+  auto subpass_texture = subpass_target.GetRenderTargetTexture();
+  if (!subpass_texture) {
+    return std::nullopt;
+  }
+
+  auto sub_command_buffer = context->CreateRenderCommandBuffer();
+  sub_command_buffer->SetLabel("Offscreen Contents Command Buffer");
+  if (!sub_command_buffer) {
+    return std::nullopt;
+  }
+
+  auto sub_renderpass = sub_command_buffer->CreateRenderPass(subpass_target);
+  if (!sub_renderpass) {
+    return std::nullopt;
+  }
+  sub_renderpass->SetLabel("OffscreenContentsPass");
+
+  if (!subpass_callback(*this, *sub_renderpass)) {
+    return std::nullopt;
+  }
+
+  if (!sub_renderpass->EncodeCommands(*context->GetTransientsAllocator())) {
+    return std::nullopt;
+  }
+
+  if (!sub_command_buffer->SubmitCommands()) {
+    return std::nullopt;
+  }
+
+  return subpass_texture;
 }
 
 std::shared_ptr<Context> ContentContext::GetContext() const {

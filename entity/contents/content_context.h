@@ -130,6 +130,12 @@ class ContentContext {
 
   std::shared_ptr<Context> GetContext() const;
 
+  using SubpassCallback =
+      std::function<bool(const ContentContext&, RenderPass&)>;
+  std::optional<std::shared_ptr<Texture>> MakeSubpass(
+      ISize texture_size,
+      SubpassCallback subpass_callback) const;
+
  private:
   std::shared_ptr<Context> context_;
 

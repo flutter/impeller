@@ -15,6 +15,7 @@
 #include "impeller/base/validation.h"
 #include "impeller/entity/contents/content_context.h"
 #include "impeller/entity/contents/filters/blend_filter_contents.h"
+#include "impeller/entity/contents/filters/filter_input.h"
 #include "impeller/entity/contents/filters/gaussian_blur_filter_contents.h"
 #include "impeller/entity/contents/texture_contents.h"
 #include "impeller/entity/entity.h"
@@ -27,61 +28,61 @@ namespace impeller {
 
 std::shared_ptr<FilterContents> FilterContents::MakeBlend(
     Entity::BlendMode blend_mode,
-    InputTextures input_textures) {
+    FilterInput::Vector inputs) {
   if (blend_mode > Entity::BlendMode::kLastAdvancedBlendMode) {
     VALIDATION_LOG << "Invalid blend mode " << static_cast<int>(blend_mode)
                    << " passed to FilterContents::MakeBlend.";
     return nullptr;
   }
 
-  if (input_textures.size() < 2 ||
+  if (inputs.size() < 2 ||
       blend_mode <= Entity::BlendMode::kLastPipelineBlendMode) {
     auto blend = std::make_shared<BlendFilterContents>();
-    blend->SetInputTextures(input_textures);
+    blend->SetInputs(inputs);
     blend->SetBlendMode(blend_mode);
     return blend;
   }
 
   if (blend_mode <= Entity::BlendMode::kLastAdvancedBlendMode) {
-    InputVariant blend = input_textures[0];
-    for (auto in_i = input_textures.begin() + 1; in_i < input_textures.end();
-         in_i++) {
-      auto new_blend = std::make_shared<BlendFilterContents>();
-      new_blend->SetInputTextures({blend, *in_i});
+    auto blend_input = inputs[0];
+    std::shared_ptr<BlendFilterContents> new_blend;
+    for (auto in_i = inputs.begin() + 1; in_i < inputs.end(); in_i++) {
+      new_blend = std::make_shared<BlendFilterContents>();
+      new_blend->SetInputs({blend_input, *in_i});
       new_blend->SetBlendMode(blend_mode);
-      blend = new_blend;
+      blend_input = FilterInput::Make(new_blend);
     }
-    auto contents = std::get<std::shared_ptr<Contents>>(blend);
-    // This downcast is safe because we know blend is a BlendFilterContents.
-    return std::static_pointer_cast<FilterContents>(contents);
+    // new_blend will always be assigned because inputs.size() >= 2.
+    return new_blend;
   }
 
   FML_UNREACHABLE();
 }
 
 std::shared_ptr<FilterContents> FilterContents::MakeDirectionalGaussianBlur(
-    InputVariant input_texture,
+    FilterInput::Ref input,
     Vector2 blur_vector) {
   auto blur = std::make_shared<DirectionalGaussianBlurFilterContents>();
-  blur->SetInputTextures({input_texture});
+  blur->SetInputs({input});
   blur->SetBlurVector(blur_vector);
   return blur;
 }
 
 std::shared_ptr<FilterContents> FilterContents::MakeGaussianBlur(
-    InputVariant input_texture,
+    FilterInput::Ref input_texture,
     Scalar sigma_x,
     Scalar sigma_y) {
   auto x_blur = MakeDirectionalGaussianBlur(input_texture, Point(sigma_x, 0));
-  return MakeDirectionalGaussianBlur(x_blur, Point(0, sigma_y));
+  return MakeDirectionalGaussianBlur(FilterInput::Make(x_blur),
+                                     Point(0, sigma_y));
 }
 
 FilterContents::FilterContents() = default;
 
 FilterContents::~FilterContents() = default;
 
-void FilterContents::SetInputTextures(InputTextures input_textures) {
-  input_textures_ = std::move(input_textures);
+void FilterContents::SetInputs(FilterInput::Vector inputs) {
+  inputs_ = std::move(inputs);
 }
 
 bool FilterContents::Render(const ContentContext& renderer,
@@ -108,43 +109,24 @@ bool FilterContents::Render(const ContentContext& renderer,
   return contents->Render(renderer, e, pass);
 }
 
-Rect FilterContents::GetBoundsForInput(const Entity& entity,
-                                       const InputVariant& input) {
-  if (auto contents = std::get_if<std::shared_ptr<Contents>>(&input)) {
-    return contents->get()->GetBounds(entity);
-  }
-
-  if (auto texture = std::get_if<std::shared_ptr<Texture>>(&input)) {
-    auto points = entity.GetPath().GetBoundingBox()->GetPoints();
-
-    const auto& transform = entity.GetTransformation();
-    for (uint i = 0; i < points.size(); i++) {
-      points[i] = transform * points[i];
-    }
-    return Rect::MakePointBounds({points.begin(), points.end()});
-  }
-
-  FML_UNREACHABLE();
-}
-
 Rect FilterContents::GetBounds(const Entity& entity) const {
   // The default bounds of FilterContents is just the union of its inputs.
   // FilterContents implementations may choose to increase the bounds in any
   // direction, but it should never
 
-  if (input_textures_.empty()) {
+  if (inputs_.empty()) {
     return Rect();
   }
 
-  Rect result = GetBoundsForInput(entity, input_textures_.front());
-  for (auto input_i = input_textures_.begin() + 1;
-       input_i < input_textures_.end(); input_i++) {
-    result.Union(GetBoundsForInput(entity, *input_i));
+  Rect result = inputs_.front()->GetBounds(entity);
+  for (auto input_i = inputs_.begin() + 1; input_i < inputs_.end(); input_i++) {
+    result.Union(input_i->get()->GetBounds(entity));
   }
 
   return result;
 }
 
+<<<<<<< HEAD
 static std::optional<Contents::Snapshot> ResolveSnapshotForInput(
     const ContentContext& renderer,
     const Entity& entity,
@@ -183,6 +165,9 @@ static std::optional<Contents::Snapshot> ResolveSnapshotForInput(
 }
 
 std::optional<Contents::Snapshot> FilterContents::RenderToTexture(
+=======
+std::optional<Snapshot> FilterContents::RenderToTexture(
+>>>>>>> f713ffb (Make filter inputs lazy and sharable)
     const ContentContext& renderer,
     const Entity& entity) const {
   auto bounds = GetBounds(entity);
@@ -194,9 +179,9 @@ std::optional<Contents::Snapshot> FilterContents::RenderToTexture(
 
   std::vector<Snapshot> input_textures;
 
-  input_textures.reserve(input_textures_.size());
-  for (const auto& input : input_textures_) {
-    auto texture_and_offset = ResolveSnapshotForInput(renderer, entity, input);
+  input_textures.reserve(inputs_.size());
+  for (const auto& input : inputs_) {
+    auto texture_and_offset = input->GetSnapshot(renderer, entity);
     if (!texture_and_offset.has_value()) {
       continue;
     }
@@ -210,8 +195,8 @@ std::optional<Contents::Snapshot> FilterContents::RenderToTexture(
 
   // Create a new texture and render the filter to it.
 
-  auto texture = MakeSubpass(
-      renderer, ISize(GetBounds(entity).size),
+  auto texture = renderer.MakeSubpass(
+      ISize(GetBounds(entity).size),
       [=](const ContentContext& renderer, RenderPass& pass) -> bool {
         return RenderFilter(input_textures, renderer, pass,
                             entity.GetTransformation());

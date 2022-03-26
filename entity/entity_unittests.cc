@@ -2,8 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <memory>
+
 #include "flutter/testing/testing.h"
 #include "impeller/entity/contents/filters/filter_contents.h"
+#include "impeller/entity/contents/filters/filter_input.h"
 #include "impeller/entity/contents/solid_color_contents.h"
 #include "impeller/entity/contents/solid_stroke_contents.h"
 #include "impeller/entity/entity.h"
@@ -657,11 +660,16 @@ TEST_F(EntityTest, Filters) {
   ASSERT_TRUE(bridge && boston && kalimba);
 
   auto callback = [&](ContentContext& context, RenderPass& pass) -> bool {
-    auto blend0 = FilterContents::MakeBlend(Entity::BlendMode::kModulate,
-                                            {kalimba, boston});
+    auto fi_bridge = FilterInput::Make(bridge);
+    auto fi_boston = FilterInput::Make(boston);
+    auto fi_kalimba = FilterInput::Make(kalimba);
 
-    auto blend1 = FilterContents::MakeBlend(Entity::BlendMode::kScreen,
-                                            {bridge, blend0, bridge, bridge});
+    auto blend0 = FilterContents::MakeBlend(Entity::BlendMode::kModulate,
+                                            {fi_kalimba, fi_boston});
+
+    auto blend1 = FilterContents::MakeBlend(
+        Entity::BlendMode::kScreen,
+        {fi_bridge, FilterInput::Make(blend0), fi_bridge, fi_bridge});
 
     Entity entity;
     entity.SetPath(PathBuilder{}.AddRect({100, 100, 300, 300}).TakePath());
@@ -701,13 +709,14 @@ TEST_F(EntityTest, GaussianBlurFilter) {
     ImGui::SliderFloat2("Skew", &skew[0], -3, 3);
     ImGui::End();
 
-    auto blend = FilterContents::MakeBlend(Entity::BlendMode::kPlus,
-                                           {boston, bridge, bridge});
+    auto blend = FilterContents::MakeBlend(
+        Entity::BlendMode::kPlus, FilterInput::Make({boston, bridge, bridge}));
 
-    auto blur =
-        FilterContents::MakeGaussianBlur(blend, blur_amount[0], blur_amount[1]);
+    auto blur = FilterContents::MakeGaussianBlur(
+        FilterInput::Make(blend), blur_amount[0], blur_amount[1]);
 
-    auto rect = Rect(-Point(boston->GetSize()) / 2, Size(boston->GetSize()));
+    ISize input_size = boston->GetSize();
+    auto rect = Rect(-Point(input_size) / 2, Size(input_size));
     auto ctm = Matrix::MakeTranslation(Vector3(offset[0], offset[1])) *
                Matrix::MakeRotation(rotation, Vector4(0, 0, 1, 1)) *
                Matrix::MakeScale(Vector3(scale[0], scale[1])) *
