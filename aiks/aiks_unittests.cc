@@ -123,6 +123,22 @@ TEST_F(AiksTest, CanRenderNestedClips) {
   ASSERT_TRUE(OpenPlaygroundHere(canvas.EndRecordingAsPicture()));
 }
 
+TEST_F(AiksTest, CanRenderDifferenceClips) {
+  Canvas canvas;
+  canvas.ClipPath(PathBuilder{}.AddCircle({400, 400}, 200).TakePath());
+  canvas.ClipPath(PathBuilder{}.AddCircle({300, 300}, 20).TakePath(),
+                  Entity::ClipOperation::kDifference);
+  canvas.ClipPath(PathBuilder{}.AddCircle({500, 300}, 20).TakePath(),
+                  Entity::ClipOperation::kDifference);
+
+  // Draw a big fuchsia rectangle covering everything.
+  Paint paint;
+  paint.color = Color::Fuchsia();
+  canvas.DrawRect(Rect::MakeXYWH(0, 0, 1000, 1000), paint);
+
+  ASSERT_TRUE(OpenPlaygroundHere(canvas.EndRecordingAsPicture()));
+}
+
 TEST_F(AiksTest, ClipsUseCurrentTransform) {
   std::array<Color, 5> colors = {Color::White(), Color::Black(),
                                  Color::SkyBlue(), Color::Red(),
