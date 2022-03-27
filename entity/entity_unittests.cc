@@ -718,7 +718,7 @@ TEST_F(EntityTest, GaussianBlurFilter) {
     ISize input_size = boston->GetSize();
     auto rect = Rect(-Point(input_size) / 2, Size(input_size));
     auto ctm = Matrix::MakeTranslation(Vector3(offset[0], offset[1])) *
-               Matrix::MakeRotation(rotation, Vector4(0, 0, 1, 1)) *
+               Matrix::MakeRotationZ(Radians(rotation)) *
                Matrix::MakeScale(Vector3(scale[0], scale[1])) *
                Matrix::MakeSkew(skew[0], skew[1]);
 
