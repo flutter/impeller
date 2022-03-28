@@ -3,6 +3,8 @@
 // found in the LICENSE file.
 
 #include "impeller/geometry/path_builder.h"
+#include "impeller/renderer/formats.h"
+#include "impeller/renderer/vertex_buffer_builder.h"
 #include "linear_gradient_contents.h"
 
 #include "impeller/entity/contents/clip_contents.h"
@@ -30,45 +32,55 @@ bool ClipContents::Render(const ContentContext& renderer,
                           RenderPass& pass) const {
   using VS = ClipPipeline::VertexShader;
 
-  Path clip_path = entity.GetPath();
-
-  // For kDifference, prepend a rectangle to the path which covers the entire
-  // screen in order to invert the path tessellation.
-  if (clip_op_ == Entity::ClipOperation::kDifference) {
-    PathBuilder path_builder;
-    auto screen_points = Rect(Size(pass.GetRenderTargetSize())).GetPoints();
-
-    // Reverse the transform that will be applied to the resulting geometry in
-    // the vertex shader so that it ends up mapping to the corners of the
-    // screen.
-    auto inverse_transform = entity.GetTransformation().Invert();
-    for (uint i = 0; i < screen_points.size(); i++) {
-      screen_points[i] = inverse_transform * screen_points[i];
-    }
-
-    path_builder.AddLine(screen_points[0], screen_points[1]);
-    path_builder.LineTo(screen_points[3]);
-    path_builder.LineTo(screen_points[2]);
-    path_builder.Close();
-
-    path_builder.AddPath(clip_path);
-    clip_path = path_builder.TakePath();
-  }
-
-  Command cmd;
-  cmd.label = "Clip";
-  cmd.pipeline =
-      renderer.GetClipPipeline(OptionsFromPassAndEntity(pass, entity));
-  cmd.stencil_reference = entity.GetStencilDepth();
-  cmd.BindVertices(SolidColorContents::CreateSolidFillVertices(
-      clip_path, pass.GetTransientsBuffer()));
-
   VS::FrameInfo info;
   // The color really doesn't matter.
   info.color = Color::SkyBlue();
+
+  Command cmd;
+  auto options = OptionsFromPassAndEntity(pass, entity);
+  cmd.stencil_reference = entity.GetStencilDepth();
+  options.stencil_compare = CompareFunction::kEqual;
+  options.stencil_operation = StencilOperation::kIncrementClamp;
+
+  if (clip_op_ == Entity::ClipOperation::kDifference) {
+    {
+      cmd.label = "Difference Clip (Increment)";
+
+      cmd.primitive_type = PrimitiveType::kTriangleStrip;
+      auto points = Rect(Size(pass.GetRenderTargetSize())).GetPoints();
+      auto vertices =
+          VertexBufferBuilder<VS::PerVertexData>{}
+              .AddVertices({{points[0]}, {points[1]}, {points[2]}, {points[3]}})
+              .CreateVertexBuffer(pass.GetTransientsBuffer());
+      cmd.BindVertices(std::move(vertices));
+
+      info.mvp = Matrix::MakeOrthographic(pass.GetRenderTargetSize());
+      VS::BindFrameInfo(cmd, pass.GetTransientsBuffer().EmplaceUniform(info));
+
+      cmd.pipeline = renderer.GetClipPipeline(options);
+      pass.AddCommand(cmd);
+    }
+
+    {
+      cmd.label = "Difference Clip (Punch)";
+
+      cmd.primitive_type = PrimitiveType::kTriangle;
+      cmd.stencil_reference = entity.GetStencilDepth() + 1;
+      options.stencil_compare = CompareFunction::kEqual;
+      options.stencil_operation = StencilOperation::kDecrementClamp;
+    }
+  } else {
+    cmd.label = "Intersect Clip";
+    options.stencil_compare = CompareFunction::kEqual;
+    options.stencil_operation = StencilOperation::kIncrementClamp;
+  }
+
+  cmd.pipeline = renderer.GetClipPipeline(options);
+  cmd.BindVertices(SolidColorContents::CreateSolidFillVertices(
+      entity.GetPath(), pass.GetTransientsBuffer()));
+
   info.mvp = Matrix::MakeOrthographic(pass.GetRenderTargetSize()) *
              entity.GetTransformation();
-
   VS::BindFrameInfo(cmd, pass.GetTransientsBuffer().EmplaceUniform(info));
 
   pass.AddCommand(std::move(cmd));
@@ -89,9 +101,11 @@ bool ClipRestoreContents::Render(const ContentContext& renderer,
   using VS = ClipPipeline::VertexShader;
 
   Command cmd;
-  cmd.label = "Clip Restore";
-  cmd.pipeline =
-      renderer.GetClipRestorePipeline(OptionsFromPassAndEntity(pass, entity));
+  cmd.label = "Restore Clip";
+  auto options = OptionsFromPassAndEntity(pass, entity);
+  options.stencil_compare = CompareFunction::kLess;
+  options.stencil_operation = StencilOperation::kSetToReferenceValue;
+  cmd.pipeline = renderer.GetClipPipeline(options);
   cmd.stencil_reference = entity.GetStencilDepth();
 
   // Create a rect that covers the whole render target.

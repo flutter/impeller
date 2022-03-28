@@ -124,17 +124,38 @@ TEST_F(AiksTest, CanRenderNestedClips) {
 }
 
 TEST_F(AiksTest, CanRenderDifferenceClips) {
+  Paint paint;
   Canvas canvas;
-  canvas.ClipPath(PathBuilder{}.AddCircle({400, 400}, 200).TakePath());
-  canvas.ClipPath(PathBuilder{}.AddCircle({300, 300}, 20).TakePath(),
+  canvas.Translate({400, 400});
+
+  // Limit drawing to face circle with a clip.
+  canvas.ClipPath(PathBuilder{}.AddCircle(Point(), 200).TakePath());
+  canvas.Save();
+
+  // Cut away eyes/mouth using difference clips.
+  canvas.ClipPath(PathBuilder{}.AddCircle({-100, -50}, 30).TakePath(),
                   Entity::ClipOperation::kDifference);
-  canvas.ClipPath(PathBuilder{}.AddCircle({500, 300}, 20).TakePath(),
+  canvas.ClipPath(PathBuilder{}.AddCircle({100, -50}, 30).TakePath(),
+                  Entity::ClipOperation::kDifference);
+  canvas.ClipPath(PathBuilder{}
+                      .AddQuadraticCurve({-100, 50}, {0, 150}, {100, 50})
+                      .TakePath(),
                   Entity::ClipOperation::kDifference);
 
-  // Draw a big fuchsia rectangle covering everything.
-  Paint paint;
-  paint.color = Color::Fuchsia();
-  canvas.DrawRect(Rect::MakeXYWH(0, 0, 1000, 1000), paint);
+  // Draw a huge yellow rectangle to prove the clipping works.
+  paint.color = Color::Yellow();
+  canvas.DrawRect(Rect::MakeXYWH(-1000, -1000, 2000, 2000), paint);
+
+  // Remove the difference clips and draw hair that partially covers the eyes.
+  canvas.Restore();
+  paint.color = Color::Maroon();
+  canvas.DrawPath(PathBuilder{}
+                      .MoveTo({200, -200})
+                      .HorizontalLineTo(-200)
+                      .VerticalLineTo(-40)
+                      .CubicCurveTo({0, -40}, {0, -80}, {200, -80})
+                      .TakePath(),
+                  paint);
 
   ASSERT_TRUE(OpenPlaygroundHere(canvas.EndRecordingAsPicture()));
 }
