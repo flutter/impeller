@@ -4,6 +4,8 @@
 
 #include "path_builder.h"
 
+#include <cmath>
+
 namespace impeller {
 
 PathBuilder::PathBuilder() = default;
@@ -288,10 +290,28 @@ PathBuilder& PathBuilder::AddRoundedRect(Rect rect, RoundingRadii radii) {
   return *this;
 }
 
+PathBuilder& PathBuilder::AddArc(const Rect& oval_bounds,
+                                 Radians start,
+                                 Radians sweep,
+                                 bool use_center) {
+  Scalar start_angle, sweep_angle;
+  if (start.radians == 0) {
+    return *this;
+  } else if (start.radians > 0) {
+    start_angle = std::
+  } else {
+    start_angle = k2Pi - std::fmod(std::fabs(start.radians + sweep.radians), k2Pi);
+  }
+  const Point r = {container.size.width * 0.5f, container.size.height * 0.5f};
+  const Point c = {container.origin.x + r.x,
+                   container.origin.y + r.y};
+  const Point m = {kArcApproximationMagic * r.x, kArcApproximationMagic * r.y};
+}
+
 PathBuilder& PathBuilder::AddOval(const Rect& container) {
   const Point r = {container.size.width * 0.5f, container.size.height * 0.5f};
-  const Point c = {container.origin.x + (container.size.width * 0.5f),
-                   container.origin.y + (container.size.height * 0.5f)};
+  const Point c = {container.origin.x + r.x,
+                   container.origin.y + r.y};
   const Point m = {kArcApproximationMagic * r.x, kArcApproximationMagic * r.y};
 
   MoveTo({c.x, c.y - r.y});
