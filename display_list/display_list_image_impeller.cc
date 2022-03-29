@@ -7,8 +7,14 @@
 namespace impeller {
 
 sk_sp<DlImageImpeller> DlImageImpeller::Make(std::shared_ptr<Texture> texture) {
+  if (!texture) {
+    return nullptr;
+  }
   return sk_sp<DlImageImpeller>(new DlImageImpeller(std::move(texture)));
 }
+
+DlImageImpeller::DlImageImpeller(std::shared_ptr<Texture> texture)
+    : texture_(std::move(texture)) {}
 
 // |DlImage|
 DlImageImpeller::~DlImageImpeller() = default;

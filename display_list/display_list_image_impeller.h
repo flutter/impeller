@@ -35,8 +35,7 @@ class DlImageImpeller final : public flutter::DlImage {
  private:
   std::shared_ptr<Texture> texture_;
 
-  DlImageImpeller(std::shared_ptr<Texture> texture)
-      : texture_(std::move(texture)) {}
+  explicit DlImageImpeller(std::shared_ptr<Texture> texture);
 
   FML_DISALLOW_COPY_AND_ASSIGN(DlImageImpeller);
 };
