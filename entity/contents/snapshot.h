@@ -18,16 +18,19 @@ namespace impeller {
 class ContentContext;
 class Entity;
 
-/// Represents a screen space texture and its intended draw position.
+/// Represents a texture and its intended draw position.
 struct Snapshot {
   std::shared_ptr<Texture> texture;
   /// The offset from the origin where this texture is intended to be
   /// rendered.
   Vector2 position;
 
-  static std::optional<Snapshot> FromTexture(const ContentContext& renderer,
-                                             const Entity& entity,
-                                             std::shared_ptr<Texture> texture);
+  /// Transform a texture by the given `entity`'s transformation matrix to a new
+  /// texture.
+  static std::optional<Snapshot> FromTransformedTexture(
+      const ContentContext& renderer,
+      const Entity& entity,
+      std::shared_ptr<Texture> texture);
 };
 
 }  // namespace impeller

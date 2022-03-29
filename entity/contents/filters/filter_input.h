@@ -18,6 +18,15 @@ namespace impeller {
 class ContentContext;
 class Entity;
 
+/// `FilterInput` is a lazy/single eval `Snapshot` which may be shared across
+/// filter parameters and used to evaluate input bounds.
+///
+/// A `FilterInput` can be created from either a `Texture` or any `Contents`
+/// class (including `FilterContents`), and can be re-used for any filter inputs
+/// across an entity's filter graph without repeating subpasses unnecessarily.
+///
+/// Filters may decide to not evaluate inputs in situations where they won't
+/// contribute to the filter's output texture.
 class FilterInput final {
  public:
   using Ref = std::shared_ptr<FilterInput>;

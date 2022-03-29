@@ -72,10 +72,9 @@ std::shared_ptr<FilterContents> FilterContents::MakeGaussianBlur(
     FilterInput::Ref input,
     Scalar sigma_x,
     Scalar sigma_y) {
-  auto x_blur =
-      MakeDirectionalGaussianBlur(input, Point(sigma_x, 0));
-  auto y_blur = MakeDirectionalGaussianBlur(
-      FilterInput::Make(x_blur), Point(0, sigma_y));
+  auto x_blur = MakeDirectionalGaussianBlur(input, Point(sigma_x, 0));
+  auto y_blur =
+      MakeDirectionalGaussianBlur(FilterInput::Make(x_blur), Point(0, sigma_y));
   return y_blur;
 }
 
@@ -143,11 +142,11 @@ std::optional<Snapshot> FilterContents::RenderToTexture(
         return RenderFilter(inputs_, renderer, entity, pass, bounds);
       });
 
-  if (!texture.has_value()) {
+  if (!texture) {
     return std::nullopt;
   }
 
-  return Snapshot{.texture = texture.value(), .position = bounds.origin};
+  return Snapshot{.texture = texture, .position = bounds.origin};
 }
 
 }  // namespace impeller

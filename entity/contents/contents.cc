@@ -44,7 +44,7 @@ std::optional<Snapshot> Contents::RenderToTexture(
   auto bounds = GetBounds(entity);
 
   auto texture = renderer.MakeSubpass(
-      ISize(bounds.size),
+      ISize::Ceil(bounds.size),
       [&contents = *this, &entity, &bounds](const ContentContext& renderer,
                                             RenderPass& pass) -> bool {
         Entity sub_entity;
@@ -56,11 +56,11 @@ std::optional<Snapshot> Contents::RenderToTexture(
         return contents.Render(renderer, sub_entity, pass);
       });
 
-  if (!texture.has_value()) {
+  if (!texture) {
     return std::nullopt;
   }
 
-  return Snapshot{.texture = texture.value(), .position = bounds.origin};
+  return Snapshot{.texture = texture, .position = bounds.origin};
 }
 
 }  // namespace impeller

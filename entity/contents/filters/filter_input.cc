@@ -68,7 +68,7 @@ std::optional<Snapshot> FilterInput::RenderToTexture(
   }
 
   if (auto texture = std::get_if<std::shared_ptr<Texture>>(&input_)) {
-    return Snapshot::FromTexture(renderer, entity, *texture);
+    return Snapshot::FromTransformedTexture(renderer, entity, *texture);
   }
 
   FML_UNREACHABLE();

@@ -9,7 +9,7 @@
 
 namespace impeller {
 
-std::optional<Snapshot> Snapshot::FromTexture(
+std::optional<Snapshot> Snapshot::FromTransformedTexture(
     const ContentContext& renderer,
     const Entity& entity,
     std::shared_ptr<Texture> texture) {
@@ -30,11 +30,11 @@ std::optional<Snapshot> Snapshot::FromTexture(
             entity.GetTransformation());
         return contents.Render(renderer, sub_entity, pass);
       });
-  if (!result.has_value()) {
+  if (!result) {
     return std::nullopt;
   }
 
-  return Snapshot{.texture = result.value(), .position = bounds.origin};
+  return Snapshot{.texture = result, .position = bounds.origin};
 }
 
 }  // namespace impeller
