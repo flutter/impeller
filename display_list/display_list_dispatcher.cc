@@ -592,6 +592,24 @@ void DisplayListDispatcher::drawImage(const sk_sp<flutter::DlImage> image,
   );
 }
 
+impeller::SamplerDescriptor ToSamplerDescriptor(
+    const SkSamplingOptions& options) {
+  impeller::SamplerDescriptor desc;
+  switch (options.filter) {
+    case SkFilterMode::kNearest:
+      desc.min_filter = desc.mag_filter = impeller::MinMagFilter::kNearest;
+      desc.label = "Nearest Sampler";
+      break;
+    case SkFilterMode::kLinear:
+      desc.min_filter = desc.mag_filter = impeller::MinMagFilter::kLinear;
+      desc.label = "Linear Sampler";
+      break;
+    default:
+      break;
+  }
+  return desc;
+}
+
 // |flutter::Dispatcher|
 void DisplayListDispatcher::drawImageRect(
     const sk_sp<flutter::DlImage> image,
@@ -604,7 +622,8 @@ void DisplayListDispatcher::drawImageRect(
       std::make_shared<Image>(image->impeller_texture()),  // image
       ToRect(src),                                         // source  rect
       ToRect(dst),                                         // destination rect
-      paint_                                               // paint
+      paint_,                                              // paint
+      ToSamplerDescriptor(sampling)                        // sampling
   );
 }
 

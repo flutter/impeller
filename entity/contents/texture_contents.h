@@ -10,6 +10,7 @@
 
 #include "flutter/fml/macros.h"
 #include "impeller/entity/contents/contents.h"
+#include "impeller/renderer/sampler_descriptor.h"
 
 namespace impeller {
 
@@ -25,6 +26,10 @@ class TextureContents final : public Contents {
 
   std::shared_ptr<Texture> GetTexture() const;
 
+  void SetSamplerDescriptor(SamplerDescriptor desc);
+
+  const SamplerDescriptor& GetSamplerDescriptor() const;
+
   void SetSourceRect(const Rect& source_rect);
 
   const Rect& GetSourceRect() const;
@@ -38,6 +43,7 @@ class TextureContents final : public Contents {
 
  public:
   std::shared_ptr<Texture> texture_;
+  SamplerDescriptor sampler_descriptor_ = {};
   Rect source_rect_;
   Scalar opacity_ = 1.0f;
 
