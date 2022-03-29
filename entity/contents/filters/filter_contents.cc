@@ -69,12 +69,14 @@ std::shared_ptr<FilterContents> FilterContents::MakeDirectionalGaussianBlur(
 }
 
 std::shared_ptr<FilterContents> FilterContents::MakeGaussianBlur(
-    FilterInput::Ref input_texture,
+    FilterInput::Ref input,
     Scalar sigma_x,
     Scalar sigma_y) {
-  auto x_blur = MakeDirectionalGaussianBlur(input_texture, Point(sigma_x, 0));
-  return MakeDirectionalGaussianBlur(FilterInput::Make(x_blur),
-                                     Point(0, sigma_y));
+  auto x_blur =
+      MakeDirectionalGaussianBlur(input, Point(sigma_x, 0));
+  auto y_blur = MakeDirectionalGaussianBlur(
+      FilterInput::Make(x_blur), Point(0, sigma_y));
+  return y_blur;
 }
 
 FilterContents::FilterContents() = default;
@@ -126,48 +128,7 @@ Rect FilterContents::GetBounds(const Entity& entity) const {
   return result;
 }
 
-<<<<<<< HEAD
-static std::optional<Contents::Snapshot> ResolveSnapshotForInput(
-    const ContentContext& renderer,
-    const Entity& entity,
-    FilterContents::InputVariant input) {
-  if (auto contents = std::get_if<std::shared_ptr<Contents>>(&input)) {
-    return contents->get()->RenderToTexture(renderer, entity);
-  }
-
-  if (auto input_texture = std::get_if<std::shared_ptr<Texture>>(&input)) {
-    auto input_bounds = FilterContents::GetBoundsForInput(entity, input);
-    // If the input is a texture, render the version of it which is transformed.
-    auto texture = Contents::MakeSubpass(
-        renderer, ISize(input_bounds.size),
-        [texture = *input_texture, entity, input_bounds](
-            const ContentContext& renderer, RenderPass& pass) -> bool {
-          TextureContents contents;
-          contents.SetTexture(texture);
-          contents.SetSourceRect(Rect::MakeSize(Size(texture->GetSize())));
-          Entity sub_entity;
-          sub_entity.SetPath(entity.GetPath());
-          sub_entity.SetBlendMode(Entity::BlendMode::kSource);
-          sub_entity.SetTransformation(
-              Matrix::MakeTranslation(Vector3(-input_bounds.origin)) *
-              entity.GetTransformation());
-          return contents.Render(renderer, sub_entity, pass);
-        });
-    if (!texture.has_value()) {
-      return std::nullopt;
-    }
-
-    return Contents::Snapshot{.texture = texture.value(),
-                              .position = input_bounds.origin};
-  }
-
-  FML_UNREACHABLE();
-}
-
-std::optional<Contents::Snapshot> FilterContents::RenderToTexture(
-=======
 std::optional<Snapshot> FilterContents::RenderToTexture(
->>>>>>> f713ffb (Make filter inputs lazy and sharable)
     const ContentContext& renderer,
     const Entity& entity) const {
   auto bounds = GetBounds(entity);
