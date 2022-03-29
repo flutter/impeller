@@ -39,7 +39,7 @@ SkISize DlImageImpeller::dimensions() const {
 size_t DlImageImpeller::GetApproximateByteSize() const {
   auto size = sizeof(this);
   if (texture_) {
-    size += texture_->GetTextureDescriptor().GetSizeOfBaseMipLevel();
+    size += texture_->GetTextureDescriptor().GetByteSizeOfBaseMipLevel();
   }
   return size;
 }

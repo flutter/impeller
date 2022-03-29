@@ -592,7 +592,7 @@ void DisplayListDispatcher::drawImage(const sk_sp<flutter::DlImage> image,
   );
 }
 
-impeller::SamplerDescriptor ToSamplerDescriptor(
+static impeller::SamplerDescriptor ToSamplerDescriptor(
     const SkSamplingOptions& options) {
   impeller::SamplerDescriptor desc;
   switch (options.filter) {
