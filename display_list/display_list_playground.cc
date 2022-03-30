@@ -44,6 +44,28 @@ bool DisplayListPlayground::OpenPlaygroundHere(
       });
 }
 
+bool DisplayListPlayground::OpenPlaygroundHere(
+    DisplayListPlaygroundCallback callback) {
+  if (!Playground::is_enabled()) {
+    return true;
+  }
+
+  AiksContext context(GetContext());
+  if (!context.IsValid()) {
+    return false;
+  }
+  return Playground::OpenPlaygroundHere(
+      [&context, &callback](RenderPass& pass) -> bool {
+        auto list = callback();
+
+        DisplayListDispatcher dispatcher;
+        list->Dispatch(dispatcher);
+        auto picture = dispatcher.EndRecordingAsPicture();
+
+        return context.Render(picture, pass);
+      });
+}
+
 static sk_sp<SkData> OpenFixtureAsSkData(const char* fixture_name) {
   auto mapping = flutter::testing::OpenFixtureAsMapping(fixture_name);
   if (!mapping) {

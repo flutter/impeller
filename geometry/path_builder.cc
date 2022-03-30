@@ -294,24 +294,60 @@ PathBuilder& PathBuilder::AddArc(const Rect& oval_bounds,
                                  Radians start,
                                  Radians sweep,
                                  bool use_center) {
-  Scalar start_angle, sweep_angle;
-  if (start.radians == 0) {
-    return *this;
-  } else if (start.radians > 0) {
-    start_angle = std::
-  } else {
-    start_angle = k2Pi - std::fmod(std::fabs(start.radians + sweep.radians), k2Pi);
+  if (sweep.radians < 0) {
+    start.radians += sweep.radians;
+    sweep.radians *= -1;
   }
-  const Point r = {container.size.width * 0.5f, container.size.height * 0.5f};
-  const Point c = {container.origin.x + r.x,
-                   container.origin.y + r.y};
-  const Point m = {kArcApproximationMagic * r.x, kArcApproximationMagic * r.y};
+  sweep.radians = std::min(k2Pi, sweep.radians);
+  start.radians = std::fmod(start.radians, k2Pi);
+
+  const Point radius = {oval_bounds.size.width * 0.5f,
+                        oval_bounds.size.height * 0.5f};
+  const Point center = {oval_bounds.origin.x + radius.x,
+                        oval_bounds.origin.y + radius.y};
+
+  const Point arc_start =
+      center + Point(std::cos(start.radians), std::sin(start.radians)) * radius;
+  if (use_center) {
+    MoveTo(center);
+    LineTo(arc_start);
+  } else {
+    MoveTo(arc_start);
+  }
+
+  while (sweep.radians > kEhCloseEnough) {
+    Scalar quadrant_angle =
+        std::min(sweep.radians, kPiOver2);
+
+    Vector2 p1_unit(std::cos(start.radians), std::sin(start.radians));
+    Vector2 p2_unit(std::cos(start.radians + quadrant_angle),
+                    std::sin(start.radians + quadrant_angle));
+
+    Vector2 arc_cp_lengths =
+        (quadrant_angle / kPiOver2) * kArcApproximationMagic * radius;
+
+    Point p1 = center + p1_unit * radius;
+    Point p2 = center + p2_unit * radius;
+    Point cp1 = p1 + Point(-p1_unit.y, p1_unit.x) * arc_cp_lengths;
+    Point cp2 = p2 + Point(p2_unit.y, -p2_unit.x) * arc_cp_lengths;
+
+    prototype_.AddCubicComponent(p1, cp1, cp2, p2);
+    current_ = p2;
+
+    start.radians += quadrant_angle;
+    sweep.radians -= quadrant_angle;
+  }
+
+  if (use_center) {
+    Close();
+  }
+
+  return *this;
 }
 
 PathBuilder& PathBuilder::AddOval(const Rect& container) {
   const Point r = {container.size.width * 0.5f, container.size.height * 0.5f};
-  const Point c = {container.origin.x + r.x,
-                   container.origin.y + r.y};
+  const Point c = {container.origin.x + r.x, container.origin.y + r.y};
   const Point m = {kArcApproximationMagic * r.x, kArcApproximationMagic * r.y};
 
   MoveTo({c.x, c.y - r.y});
