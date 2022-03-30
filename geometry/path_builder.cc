@@ -306,36 +306,41 @@ PathBuilder& PathBuilder::AddArc(const Rect& oval_bounds,
   const Point center = {oval_bounds.origin.x + radius.x,
                         oval_bounds.origin.y + radius.y};
 
-  const Point arc_start =
-      center + Point(std::cos(start.radians), std::sin(start.radians)) * radius;
+  Vector2 p1_unit(std::cos(start.radians), std::sin(start.radians));
+
   if (use_center) {
     MoveTo(center);
-    LineTo(arc_start);
+    LineTo(center + p1_unit * radius);
   } else {
-    MoveTo(arc_start);
+    MoveTo(center + p1_unit * radius);
   }
 
-  while (sweep.radians > kEhCloseEnough) {
-    Scalar quadrant_angle =
-        std::min(sweep.radians, kPiOver2);
-
-    Vector2 p1_unit(std::cos(start.radians), std::sin(start.radians));
-    Vector2 p2_unit(std::cos(start.radians + quadrant_angle),
-                    std::sin(start.radians + quadrant_angle));
+  while (sweep.radians > 0) {
+    Vector2 p2_unit;
+    Scalar quadrant_angle;
+    if (sweep.radians < kPiOver2) {
+      quadrant_angle = sweep.radians;
+      p2_unit = Vector2(std::cos(start.radians + quadrant_angle),
+                        std::sin(start.radians + quadrant_angle));
+    } else {
+      quadrant_angle = kPiOver2;
+      p2_unit = Vector2(-p1_unit.y, p1_unit.x);
+    }
 
     Vector2 arc_cp_lengths =
         (quadrant_angle / kPiOver2) * kArcApproximationMagic * radius;
 
     Point p1 = center + p1_unit * radius;
     Point p2 = center + p2_unit * radius;
-    Point cp1 = p1 + Point(-p1_unit.y, p1_unit.x) * arc_cp_lengths;
-    Point cp2 = p2 + Point(p2_unit.y, -p2_unit.x) * arc_cp_lengths;
+    Point cp1 = p1 + Vector2(-p1_unit.y, p1_unit.x) * arc_cp_lengths;
+    Point cp2 = p2 + Vector2(p2_unit.y, -p2_unit.x) * arc_cp_lengths;
 
     prototype_.AddCubicComponent(p1, cp1, cp2, p2);
     current_ = p2;
 
     start.radians += quadrant_angle;
     sweep.radians -= quadrant_angle;
+    p1_unit = p2_unit;
   }
 
   if (use_center) {
