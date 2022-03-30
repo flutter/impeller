@@ -22,26 +22,7 @@ bool DisplayListPlayground::OpenPlaygroundHere(
 
 bool DisplayListPlayground::OpenPlaygroundHere(
     sk_sp<flutter::DisplayList> list) {
-  if (!Playground::is_enabled()) {
-    return true;
-  }
-
-  if (!list) {
-    return false;
-  }
-
-  DisplayListDispatcher dispatcher;
-  list->Dispatch(dispatcher);
-  auto picture = dispatcher.EndRecordingAsPicture();
-
-  AiksContext context(GetContext());
-  if (!context.IsValid()) {
-    return false;
-  }
-  return Playground::OpenPlaygroundHere(
-      [&picture, &context](RenderPass& pass) -> bool {
-        return context.Render(picture, pass);
-      });
+  return OpenPlaygroundHere([&list]() { return list; });
 }
 
 bool DisplayListPlayground::OpenPlaygroundHere(
