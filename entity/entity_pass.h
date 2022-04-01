@@ -48,7 +48,7 @@ class EntityPass {
 
   EntityPass* GetSuperpass() const;
 
-  bool Render(ContentContext& renderer, RenderPass& parent_pass) const;
+  bool Render(ContentContext& renderer, RenderPass& parent_pass);
 
   void IterateAllEntities(std::function<bool(Entity&)> iterator);
 
@@ -61,6 +61,7 @@ class EntityPass {
   Subpasses subpasses_;
   EntityPass* superpass_ = nullptr;
   Matrix xformation_;
+  Point texture_offset_;
   size_t stencil_depth_ = 0u;
   std::unique_ptr<EntityPassDelegate> delegate_ =
       EntityPassDelegate::MakeDefault();

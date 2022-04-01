@@ -102,11 +102,10 @@ EntityPass* EntityPass::AddSubpass(std::unique_ptr<EntityPass> pass) {
   return subpasses_.emplace_back(std::move(pass)).get();
 }
 
-bool EntityPass::Render(ContentContext& renderer,
-                        RenderPass& parent_pass) const {
+bool EntityPass::Render(ContentContext& renderer, RenderPass& parent_pass) {
   TRACE_EVENT0("impeller", "EntityPass::Render");
 
-  for (const auto& entity : entities_) {
+  for (auto& entity : entities_) {
     if (!entity.Render(renderer, parent_pass)) {
       return false;
     }
@@ -134,6 +133,19 @@ bool EntityPass::Render(ContentContext& renderer,
       // It is not an error to have an empty subpass. But subpasses that can't
       // create their intermediates must trip errors.
       continue;
+    }
+
+    if (!subpass_coverage->origin.IsZero()) {
+      // Translate all of the subpass entities to ensure they'll render within
+      // the bounds of the offscreen texture. Then, Record the translation for
+      // positioning the subpass texture when compositing with the parent pass.
+      for (auto& entity : subpass->entities_) {
+        entity.SetTransformation(
+            Matrix::MakeTranslation(Vector3(-subpass_coverage->origin)) *
+            entity.GetTransformation());
+      }
+
+      subpass->texture_offset_ += subpass_coverage->origin;
     }
 
     auto context = renderer.GetContext();
@@ -194,7 +206,12 @@ bool EntityPass::Render(ContentContext& renderer,
     entity.SetPath(PathBuilder{}.AddRect(subpass_coverage.value()).TakePath());
     entity.SetContents(std::move(offscreen_texture_contents));
     entity.SetStencilDepth(stencil_depth_);
-    entity.SetTransformation(xformation_);
+    // Once we have filters being applied for SaveLayer, some special sauce
+    // may be needed here (or in PaintPassDelegate) to ensure the filter
+    // parameters are transformed by the `xformation_` matrix, while continuing
+    // to apply only the subpass offset to the offscreen texture here.
+    entity.SetTransformation(
+        Matrix::MakeTranslation(Vector3(subpass->texture_offset_)));
     if (!entity.Render(renderer, parent_pass)) {
       return false;
     }

@@ -516,6 +516,25 @@ TEST_F(AiksTest, PathsShouldHaveUniformAlpha) {
     }
     canvas.Translate({-240, 60});
   }
+}
+
+TEST_F(AiksTest, CoverageOriginShouldBeAccountedForInSubpasses) {
+  Canvas canvas;
+
+  Paint alpha;
+  alpha.color = Color::Red().WithAlpha(0.5);
+
+  auto current = Point{25, 25};
+  const auto offset = Point{25, 25};
+  const auto size = Size(100, 100);
+
+  canvas.SaveLayer(alpha);
+
+  canvas.DrawRect({current, size}, Paint{.color = Color::Red()});
+  canvas.DrawRect({current += offset, size}, Paint{.color = Color::Green()});
+  canvas.DrawRect({current += offset, size}, Paint{.color = Color::Blue()});
+
+  canvas.Restore();
 
   ASSERT_TRUE(OpenPlaygroundHere(canvas.EndRecordingAsPicture()));
 }
