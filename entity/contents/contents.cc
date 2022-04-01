@@ -31,7 +31,12 @@ Contents::~Contents() = default;
 
 Rect Contents::GetBounds(const Entity& entity) const {
   const auto& transform = entity.GetTransformation();
-  auto points = entity.GetPath().GetBoundingBox()->GetPoints();
+  auto bounds = entity.GetPath().GetBoundingBox();
+  if (!bounds.has_value()) {
+    return Rect();
+  }
+
+  auto points = bounds->GetPoints();
   for (uint i = 0; i < points.size(); i++) {
     points[i] = transform * points[i];
   }
