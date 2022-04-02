@@ -215,17 +215,6 @@ bool EntityPass::Render(ContentContext& renderer, RenderPass& parent_pass) {
       return false;
     }
 
-    FML_LOG(ERROR) << "Subpass coverage: " << subpass_coverage->GetLeft() << " "
-                   << subpass_coverage->GetTop() << " "
-                   << subpass_coverage->GetRight() << " "
-                   << subpass_coverage->GetBottom();
-    FML_LOG(ERROR) << "Subpass texture position: "
-                   << subpass->texture_position_.x << " "
-                   << subpass->texture_position_.y;
-    FML_LOG(ERROR) << "Subpass texture size: "
-                   << subpass_target.GetRenderTargetSize().width << " "
-                   << subpass_target.GetRenderTargetSize().height;
-
     Entity entity;
     entity.SetPath(PathBuilder{}
                        .AddRect(Rect::MakeSize(subpass_coverage->size))
