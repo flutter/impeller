@@ -9,6 +9,7 @@
 #include <ostream>
 #include <vector>
 
+#include "impeller/geometry/matrix.h"
 #include "impeller/geometry/point.h"
 #include "impeller/geometry/scalar.h"
 #include "impeller/geometry/size.h"
@@ -141,6 +142,16 @@ struct TRect {
     const auto bottom = std::max(origin.y, origin.y + size.height);
     return {TPoint(left, top), TPoint(right, top), TPoint(left, bottom),
             TPoint(right, bottom)};
+  }
+
+  /// @brief  Creates a new bounding box that contains this transformed
+  ///         rectangle.
+  constexpr TRect TransformBounds(const Matrix& transform) const {
+    auto points = this->GetPoints();
+    for (uint i = 0; i < points.size(); i++) {
+      points[i] = transform * points[i];
+    }
+    return TRect::MakePointBounds({points.begin(), points.end()});
   }
 
   constexpr TRect Union(const TRect& o) const {

@@ -5,10 +5,12 @@
 #include "impeller/entity/entity_pass.h"
 
 #include "flutter/fml/trace_event.h"
+#include "impeller/base/validation.h"
 #include "impeller/entity/contents/content_context.h"
 #include "impeller/geometry/path_builder.h"
 #include "impeller/renderer/command_buffer.h"
 #include "impeller/renderer/render_pass.h"
+#include "impeller/renderer/texture.h"
 
 namespace impeller {
 
@@ -64,6 +66,19 @@ std::optional<Rect> EntityPass::GetEntitiesCoverage() const {
   return result;
 }
 
+void EntityPass::ApplyTextureTranslation(Point translation) {
+  texture_position_ += translation;
+
+  for (auto& entity : entities_) {
+    entity.SetTransformation(Matrix::MakeTranslation(-translation) *
+                             entity.GetTransformation());
+  }
+
+  for (auto& subpass : subpasses_) {
+    subpass->ApplyTextureTranslation(translation);
+  }
+}
+
 std::optional<Rect> EntityPass::GetSubpassCoverage(
     const EntityPass& subpass) const {
   auto entities_coverage = subpass.GetEntitiesCoverage();
@@ -78,6 +93,11 @@ std::optional<Rect> EntityPass::GetSubpassCoverage(
   if (!delegate_coverage.has_value()) {
     return entities_coverage;
   }
+  // The delegate coverage hint is in given in local space, so apply the subpass
+  // transformation and texture offset.
+  delegate_coverage = delegate_coverage->TransformBounds(
+      Matrix::MakeTranslation(Vector3(-subpass.texture_position_)) *
+      subpass.xformation_);
 
   // If the delegate tells us the coverage is smaller than it needs to be, then
   // great. OTOH, if the delegate is being wasteful, limit coverage to what is
@@ -137,15 +157,8 @@ bool EntityPass::Render(ContentContext& renderer, RenderPass& parent_pass) {
 
     if (!subpass_coverage->origin.IsZero()) {
       // Translate all of the subpass entities to ensure they'll render within
-      // the bounds of the offscreen texture. Then, Record the translation for
-      // positioning the subpass texture when compositing with the parent pass.
-      for (auto& entity : subpass->entities_) {
-        entity.SetTransformation(
-            Matrix::MakeTranslation(Vector3(-subpass_coverage->origin)) *
-            entity.GetTransformation());
-      }
-
-      subpass->texture_offset_ += subpass_coverage->origin;
+      // the bounds of the offscreen texture.
+      subpass->ApplyTextureTranslation(subpass_coverage->origin);
     }
 
     auto context = renderer.GetContext();
@@ -202,16 +215,29 @@ bool EntityPass::Render(ContentContext& renderer, RenderPass& parent_pass) {
       return false;
     }
 
+    FML_LOG(ERROR) << "Subpass coverage: " << subpass_coverage->GetLeft() << " "
+                   << subpass_coverage->GetTop() << " "
+                   << subpass_coverage->GetRight() << " "
+                   << subpass_coverage->GetBottom();
+    FML_LOG(ERROR) << "Subpass texture position: "
+                   << subpass->texture_position_.x << " "
+                   << subpass->texture_position_.y;
+    FML_LOG(ERROR) << "Subpass texture size: "
+                   << subpass_target.GetRenderTargetSize().width << " "
+                   << subpass_target.GetRenderTargetSize().height;
+
     Entity entity;
-    entity.SetPath(PathBuilder{}.AddRect(subpass_coverage.value()).TakePath());
+    entity.SetPath(PathBuilder{}
+                       .AddRect(Rect::MakeSize(subpass_coverage->size))
+                       .TakePath());
     entity.SetContents(std::move(offscreen_texture_contents));
     entity.SetStencilDepth(stencil_depth_);
     // Once we have filters being applied for SaveLayer, some special sauce
     // may be needed here (or in PaintPassDelegate) to ensure the filter
     // parameters are transformed by the `xformation_` matrix, while continuing
-    // to apply only the subpass offset to the offscreen texture here.
+    // to apply only the subpass offset to the offscreen texture.
     entity.SetTransformation(
-        Matrix::MakeTranslation(Vector3(subpass->texture_offset_)));
+        Matrix::MakeTranslation(Vector3(subpass->texture_position_)));
     if (!entity.Render(renderer, parent_pass)) {
       return false;
     }

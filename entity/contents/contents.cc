@@ -35,12 +35,7 @@ Rect Contents::GetBounds(const Entity& entity) const {
   if (!bounds.has_value()) {
     return Rect();
   }
-
-  auto points = bounds->GetPoints();
-  for (uint i = 0; i < points.size(); i++) {
-    points[i] = transform * points[i];
-  }
-  return Rect::MakePointBounds({points.begin(), points.end()});
+  return bounds->TransformBounds(transform);
 }
 
 std::optional<Snapshot> Contents::RenderToTexture(
