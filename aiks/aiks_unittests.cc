@@ -533,7 +533,6 @@ TEST_F(AiksTest, CoverageOriginShouldBeAccountedForInSubpasses) {
                                              Color::White(), Color::White());
     auto bounds = Rect::MakeLTRB(b0.x, b0.y, b1.x, b1.y);
 
-    canvas.Translate(Point(30, 30));
     canvas.DrawRect(bounds, Paint{.color = Color::Yellow(),
                                   .stroke_width = 5.0f,
                                   .style = Paint::Style::kStroke});

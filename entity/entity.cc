@@ -31,7 +31,11 @@ void Entity::SetPath(Path path) {
 }
 
 Rect Entity::GetTransformedPathBounds() const {
-  return GetPath().GetBoundingBox()->TransformBounds(GetTransformation());
+  auto bounds = GetPath().GetBoundingBox();
+  if (!bounds.has_value()) {
+    return Rect();
+  }
+  return bounds->TransformBounds(GetTransformation());
 }
 
 void Entity::SetAddsToCoverage(bool adds) {

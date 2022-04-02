@@ -30,12 +30,7 @@ Contents::Contents() = default;
 Contents::~Contents() = default;
 
 Rect Contents::GetBounds(const Entity& entity) const {
-  const auto& transform = entity.GetTransformation();
-  auto bounds = entity.GetPath().GetBoundingBox();
-  if (!bounds.has_value()) {
-    return Rect();
-  }
-  return bounds->TransformBounds(transform);
+  return entity.GetTransformedPathBounds();
 }
 
 std::optional<Snapshot> Contents::RenderToTexture(
