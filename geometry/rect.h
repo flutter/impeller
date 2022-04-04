@@ -52,8 +52,11 @@ struct TRect {
     return TRect(0.0, 0.0, size.width, size.height);
   }
 
-  constexpr static TRect MakePointBounds(
+  constexpr static std::optional<TRect> MakePointBounds(
       const std::vector<TPoint<Type>>& points) {
+    if (points.empty()) {
+      return std::nullopt;
+    }
     auto left = points[0].x;
     auto top = points[0].y;
     auto right = points[0].x;
@@ -147,11 +150,11 @@ struct TRect {
   /// @brief  Creates a new bounding box that contains this transformed
   ///         rectangle.
   constexpr TRect TransformBounds(const Matrix& transform) const {
-    auto points = this->GetPoints();
+    auto points = GetPoints();
     for (uint i = 0; i < points.size(); i++) {
       points[i] = transform * points[i];
     }
-    return TRect::MakePointBounds({points.begin(), points.end()});
+    return TRect::MakePointBounds({points.begin(), points.end()}).value();
   }
 
   constexpr TRect Union(const TRect& o) const {
