@@ -51,8 +51,8 @@ void main() {
   vec4 blur_color = total / total_gaussian;
 
   vec4 src_color = SampleWithBorder(alpha_mask_sampler, v_src_texture_coords);
-  float blur_factor = v_inner_blur_factor * src_color.a +
-                      v_outer_blur_factor * (1.0 - src_color.a);
+  float blur_factor = v_inner_blur_factor * float(src_color.a > 0) +
+                      v_outer_blur_factor * float(src_color.a == 0);
 
   frag_color = blur_color * blur_factor + src_color * v_src_factor;
 }
