@@ -33,20 +33,19 @@ float Gaussian(float x) {
 
 // Emulate SamplerAddressMode::ClampToBorder.
 vec4 SampleWithBorder(sampler2D tex, vec2 uv) {
-  float within_bounds = float(uv.x > 0 && uv.y > 0 && uv.x < 1 && uv.y < 1);
+  float within_bounds = float(uv.x >= 0 && uv.y >= 0 && uv.x < 1 && uv.y < 1);
   return texture(tex, uv) * within_bounds;
 }
 
 void main() {
   vec4 total = vec4(0);
   float total_gaussian = 0;
+  vec2 blur_uv_offset = v_blur_direction / v_texture_size;
   for (float i = -v_blur_radius; i <= v_blur_radius; i++) {
     float gaussian = Gaussian(i);
     total_gaussian += gaussian;
-    total +=
-        gaussian * SampleWithBorder(texture_sampler,
-                                    v_texture_coords +
-                                        v_blur_direction * i / v_texture_size);
+    total += gaussian * SampleWithBorder(texture_sampler,
+                                         v_texture_coords + blur_uv_offset * i);
   }
 
   vec4 blur_color = total / total_gaussian;
@@ -55,6 +54,5 @@ void main() {
   float blur_factor = v_inner_blur_factor * src_color.a +
                       v_outer_blur_factor * (1.0 - src_color.a);
 
-  frag_color =
-      blur_color * blur_factor + src_color * v_src_factor * src_color.a;
+  frag_color = blur_color * blur_factor + src_color * v_src_factor;
 }
