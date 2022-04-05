@@ -112,22 +112,16 @@ bool EntityPass::Render(ContentContext& renderer,
                         Point position) const {
   TRACE_EVENT0("impeller", "EntityPass::Render");
 
-  if (position.IsZero()) {
-    for (const auto& entity : entities_) {
-      if (!entity.Render(renderer, parent_pass)) {
-        return false;
-      }
-    }
-  } else {
-    // If the pass image is going to be rendered with a non-zero position, apply
-    // the negative translation to entity copies before rendering them so that
-    // they'll end up rendering to the correct on-screen position.
-    for (Entity entity : entities_) {
+  for (Entity entity : entities_) {
+    if (!position.IsZero()) {
+      // If the pass image is going to be rendered with a non-zero position,
+      // apply the negative translation to entity copies before rendering them
+      // so that they'll end up rendering to the correct on-screen position.
       entity.SetTransformation(Matrix::MakeTranslation(Vector3(-position)) *
                                entity.GetTransformation());
-      if (!entity.Render(renderer, parent_pass)) {
-        return false;
-      }
+    }
+    if (!entity.Render(renderer, parent_pass)) {
+      return false;
     }
   }
 
