@@ -66,19 +66,6 @@ std::optional<Rect> EntityPass::GetEntitiesCoverage() const {
   return result;
 }
 
-void EntityPass::ApplyTextureTranslation(Point translation) {
-  texture_position_ += translation;
-
-  for (auto& entity : entities_) {
-    entity.SetTransformation(Matrix::MakeTranslation(-translation) *
-                             entity.GetTransformation());
-  }
-
-  for (auto& subpass : subpasses_) {
-    subpass->ApplyTextureTranslation(translation);
-  }
-}
-
 std::optional<Rect> EntityPass::GetSubpassCoverage(
     const EntityPass& subpass) const {
   auto entities_coverage = subpass.GetEntitiesCoverage();
@@ -94,10 +81,8 @@ std::optional<Rect> EntityPass::GetSubpassCoverage(
     return entities_coverage;
   }
   // The delegate coverage hint is in given in local space, so apply the subpass
-  // transformation and texture offset.
-  delegate_coverage = delegate_coverage->TransformBounds(
-      Matrix::MakeTranslation(Vector3(-subpass.texture_position_)) *
-      subpass.xformation_);
+  // transformation.
+  delegate_coverage = delegate_coverage->TransformBounds(subpass.xformation_);
 
   // If the delegate tells us the coverage is smaller than it needs to be, then
   // great. OTOH, if the delegate is being wasteful, limit coverage to what is
@@ -122,14 +107,30 @@ EntityPass* EntityPass::AddSubpass(std::unique_ptr<EntityPass> pass) {
   return subpasses_.emplace_back(std::move(pass)).get();
 }
 
-bool EntityPass::Render(ContentContext& renderer, RenderPass& parent_pass) {
+bool EntityPass::Render(ContentContext& renderer,
+                        RenderPass& parent_pass,
+                        Point position) const {
   TRACE_EVENT0("impeller", "EntityPass::Render");
 
-  for (auto& entity : entities_) {
-    if (!entity.Render(renderer, parent_pass)) {
-      return false;
+  if (position.IsZero()) {
+    for (const auto& entity : entities_) {
+      if (!entity.Render(renderer, parent_pass)) {
+        return false;
+      }
+    }
+  } else {
+    // If the pass image is going to be rendered with a non-zero position, apply
+    // the negative translation to entity copies before rendering them so that
+    // they'll end up rendering to the correct on-screen position.
+    for (Entity entity : entities_) {
+      entity.SetTransformation(Matrix::MakeTranslation(Vector3(-position)) *
+                               entity.GetTransformation());
+      if (!entity.Render(renderer, parent_pass)) {
+        return false;
+      }
     }
   }
+
   for (const auto& subpass : subpasses_) {
     if (delegate_->CanElide()) {
       continue;
@@ -137,7 +138,7 @@ bool EntityPass::Render(ContentContext& renderer, RenderPass& parent_pass) {
 
     if (delegate_->CanCollapseIntoParentPass()) {
       // Directly render into the parent pass and move on.
-      if (!subpass->Render(renderer, parent_pass)) {
+      if (!subpass->Render(renderer, parent_pass, position)) {
         return false;
       }
       continue;
@@ -153,12 +154,6 @@ bool EntityPass::Render(ContentContext& renderer, RenderPass& parent_pass) {
       // It is not an error to have an empty subpass. But subpasses that can't
       // create their intermediates must trip errors.
       continue;
-    }
-
-    if (!subpass_coverage->origin.IsZero()) {
-      // Translate all of the subpass entities to ensure they'll render within
-      // the bounds of the offscreen texture.
-      subpass->ApplyTextureTranslation(subpass_coverage->origin);
     }
 
     auto context = renderer.GetContext();
@@ -203,7 +198,7 @@ bool EntityPass::Render(ContentContext& renderer, RenderPass& parent_pass) {
 
     sub_renderpass->SetLabel("OffscreenPass");
 
-    if (!subpass->Render(renderer, *sub_renderpass)) {
+    if (!subpass->Render(renderer, *sub_renderpass, subpass_coverage->origin)) {
       return false;
     }
 
@@ -226,7 +221,7 @@ bool EntityPass::Render(ContentContext& renderer, RenderPass& parent_pass) {
     // parameters are transformed by the `xformation_` matrix, while continuing
     // to apply only the subpass offset to the offscreen texture.
     entity.SetTransformation(
-        Matrix::MakeTranslation(Vector3(subpass->texture_position_)));
+        Matrix::MakeTranslation(Vector3(subpass_coverage->origin - position)));
     if (!entity.Render(renderer, parent_pass)) {
       return false;
     }

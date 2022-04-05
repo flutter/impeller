@@ -48,7 +48,9 @@ class EntityPass {
 
   EntityPass* GetSuperpass() const;
 
-  bool Render(ContentContext& renderer, RenderPass& parent_pass);
+  bool Render(ContentContext& renderer,
+              RenderPass& parent_pass,
+              Point position = Point()) const;
 
   void IterateAllEntities(std::function<bool(Entity&)> iterator);
 
@@ -61,8 +63,6 @@ class EntityPass {
   Subpasses subpasses_;
   EntityPass* superpass_ = nullptr;
   Matrix xformation_;
-  /// The screen space position where this subpass' texture should be rendered.
-  Point texture_position_;
   size_t stencil_depth_ = 0u;
   std::unique_ptr<EntityPassDelegate> delegate_ =
       EntityPassDelegate::MakeDefault();
@@ -72,16 +72,6 @@ class EntityPass {
   std::optional<Rect> GetSubpassCoverage(const EntityPass& subpass) const;
 
   std::optional<Rect> GetEntitiesCoverage() const;
-
-  /// @brief  Amends the position of the texture to be rendered for this
-  ///         subpass. The transforms of all entities under this subpass are
-  ///         also translated to ensure their positions are unchanged when the
-  ///         subpass texture is rendered to the parent pass.
-  ///
-  ///         This should only ever be called directly in cases where the
-  ///         subpass will not collapse into the parent pass, otherwise entities
-  ///         will render to the wrong location in the screen.
-  void ApplyTextureTranslation(Point translation);
 
   FML_DISALLOW_COPY_AND_ASSIGN(EntityPass);
 };
