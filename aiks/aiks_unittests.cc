@@ -520,5 +520,19 @@ TEST_F(AiksTest, PathsShouldHaveUniformAlpha) {
   ASSERT_TRUE(OpenPlaygroundHere(canvas.EndRecordingAsPicture()));
 }
 
+TEST_F(AiksTest, DrawRectStrokesRenderCorrectly) {
+  Canvas canvas;
+  Paint paint;
+  paint.color = Color::Red();
+  paint.style = Paint::Style::kStroke;
+  paint.stroke_width = 10;
+
+  canvas.Translate({100, 100});
+  canvas.DrawPath(PathBuilder{}.AddRect(Rect::MakeSize({100, 100})).TakePath(),
+                  paint);
+
+  ASSERT_TRUE(OpenPlaygroundHere(canvas.EndRecordingAsPicture()));
+}
+
 }  // namespace testing
 }  // namespace impeller
