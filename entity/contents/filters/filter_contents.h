@@ -29,19 +29,51 @@ class FilterContents : public Contents {
     kInner,
   };
 
+  /// 1 / sqrt(3)
+  /// This is the Gaussian blur standard deviation cutoff expected by Flutter:
+  /// https://api.flutter.dev/flutter/dart-ui/Shadow/convertRadiusToSigma.html
+  constexpr static float kBlurSigmaScale = 0.57735026919;
+
+  struct Radius;
+
+  struct Sigma {
+    Scalar sigma = 0.0;
+
+    constexpr Sigma() = default;
+
+    explicit constexpr Sigma(Scalar p_sigma) : sigma(p_sigma) {}
+
+    constexpr operator Radius() const {
+      return Radius{sigma > 0.5f ? (sigma - 0.5f) / kBlurSigmaScale : 0.0f};
+    };
+  };
+
+  struct Radius {
+    Scalar radius = 0.0;
+
+    constexpr Radius() = default;
+
+    explicit constexpr Radius(Scalar p_radius) : radius(p_radius) {}
+
+    constexpr operator Sigma() const {
+      return Sigma{radius > 0 ? kBlurSigmaScale * radius + 0.5f : 0.0f};
+    };
+  };
+
   static std::shared_ptr<FilterContents> MakeBlend(Entity::BlendMode blend_mode,
                                                    FilterInput::Vector inputs);
 
   static std::shared_ptr<FilterContents> MakeDirectionalGaussianBlur(
       FilterInput::Ref input,
-      Vector2 blur_vector,
+      Sigma sigma,
+      Vector2 direction,
       BlurStyle blur_style = BlurStyle::kNormal,
       FilterInput::Ref alpha_mask = nullptr);
 
   static std::shared_ptr<FilterContents> MakeGaussianBlur(
       FilterInput::Ref input,
-      Scalar sigma_x,
-      Scalar sigma_y,
+      Sigma sigma_x,
+      Sigma sigma_y,
       BlurStyle blur_style = BlurStyle::kNormal);
 
   FilterContents();
