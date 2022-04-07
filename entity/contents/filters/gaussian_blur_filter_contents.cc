@@ -24,6 +24,10 @@ DirectionalGaussianBlurFilterContents::
 
 void DirectionalGaussianBlurFilterContents::SetSigma(Sigma sigma) {
   if (sigma.sigma < kEhCloseEnough) {
+    // This cutoff is an implementation detail of the blur that's tied to the
+    // fragment shader. When the blur is set to 0, having a value slightly above
+    // zero makes the shader do 1 finite sample to pass the image through with
+    // no blur (while retaining correct alpha mask behavior).
     blur_sigma_ = Sigma{kEhCloseEnough};
     return;
   }
