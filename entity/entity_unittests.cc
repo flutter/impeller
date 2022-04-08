@@ -12,6 +12,7 @@
 #include "impeller/entity/contents/solid_stroke_contents.h"
 #include "impeller/entity/entity.h"
 #include "impeller/entity/entity_playground.h"
+#include "impeller/geometry/geometry_unittests.h"
 #include "impeller/geometry/path_builder.h"
 #include "impeller/playground/playground.h"
 #include "impeller/playground/widgets.h"
@@ -794,6 +795,53 @@ TEST_F(EntityTest, ContentsGetBoundsForEmptyPathReturnsNullopt) {
   entity.SetPath({});
   ASSERT_FALSE(entity.GetCoverage().has_value());
   ASSERT_FALSE(entity.GetPathCoverage().has_value());
+}
+
+TEST_F(EntityTest, SolidStrokeCoverageIsCorrect) {
+  {
+    Entity entity;
+    auto contents = std::make_unique<SolidStrokeContents>();
+    contents->SetStrokeCap(SolidStrokeContents::Cap::kButt);
+    contents->SetStrokeJoin(SolidStrokeContents::Join::kBevel);
+    contents->SetStrokeSize(4);
+    entity.SetPath(PathBuilder{}.AddLine({0, 0}, {10, 10}).TakePath());
+    entity.SetContents(std::move(contents));
+    auto actual = entity.GetCoverage();
+    auto expected = Rect::MakeLTRB(-2, -2, 12, 12);
+    ASSERT_TRUE(actual.has_value());
+    ASSERT_RECT_NEAR(actual.value(), expected);
+  }
+
+  // Cover the Cap::kSquare case.
+  {
+    Entity entity;
+    auto contents = std::make_unique<SolidStrokeContents>();
+    contents->SetStrokeCap(SolidStrokeContents::Cap::kSquare);
+    contents->SetStrokeJoin(SolidStrokeContents::Join::kBevel);
+    contents->SetStrokeSize(4);
+    entity.SetPath(PathBuilder{}.AddLine({0, 0}, {10, 10}).TakePath());
+    entity.SetContents(std::move(contents));
+    auto actual = entity.GetCoverage();
+    auto expected = Rect::MakeLTRB(-3, -3, 13, 13);
+    ASSERT_TRUE(actual.has_value());
+    ASSERT_RECT_NEAR(actual.value(), expected);
+  }
+
+  // Cover the Join::kMiter case.
+  {
+    Entity entity;
+    auto contents = std::make_unique<SolidStrokeContents>();
+    contents->SetStrokeCap(SolidStrokeContents::Cap::kSquare);
+    contents->SetStrokeJoin(SolidStrokeContents::Join::kMiter);
+    contents->SetStrokeSize(4);
+    contents->SetStrokeMiter(2);
+    entity.SetPath(PathBuilder{}.AddLine({0, 0}, {10, 10}).TakePath());
+    entity.SetContents(std::move(contents));
+    auto actual = entity.GetCoverage();
+    auto expected = Rect::MakeLTRB(-4, -4, 14, 14);
+    ASSERT_TRUE(actual.has_value());
+    ASSERT_RECT_NEAR(actual.value(), expected);
+  }
 }
 
 }  // namespace testing
