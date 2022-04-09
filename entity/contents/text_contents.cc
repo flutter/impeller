@@ -48,6 +48,10 @@ void TextContents::SetColor(Color color) {
   color_ = color;
 }
 
+std::optional<Rect> TextContents::GetCoverage(const Entity& entity) const {
+  return frame_.GetBounds().TransformBounds(entity.GetTransformation());
+}
+
 bool TextContents::Render(const ContentContext& renderer,
                           const Entity& entity,
                           RenderPass& pass) const {

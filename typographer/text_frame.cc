@@ -10,6 +10,14 @@ TextFrame::TextFrame() = default;
 
 TextFrame::~TextFrame() = default;
 
+const Rect& TextFrame::GetBounds() const {
+  return bounds_;
+}
+
+void TextFrame::SetBounds(Rect bounds) {
+  bounds_ = std::move(bounds);
+}
+
 bool TextFrame::AddTextRun(TextRun run) {
   if (!run.IsValid()) {
     return false;

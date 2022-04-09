@@ -21,6 +21,9 @@ class TextFrame {
 
   ~TextFrame();
 
+  const Rect& GetBounds() const;
+  void SetBounds(Rect bounds);
+
   //----------------------------------------------------------------------------
   /// @brief      The number of runs in this text frame.
   ///
@@ -45,6 +48,7 @@ class TextFrame {
   const std::vector<TextRun>& GetRuns() const;
 
  private:
+  Rect bounds_;
   std::vector<TextRun> runs_;
 };
 
