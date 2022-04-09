@@ -46,11 +46,9 @@ std::optional<Rect> SolidStrokeContents::GetCoverage(
   Vector2 max_radius_xy = entity.GetTransformation().TransformDirection(
       Vector2(max_radius, max_radius) * stroke_size_);
 
-  return Rect(
-      Point(std::floor(path_coverage->origin.x - max_radius_xy.x),
-            std::floor(path_coverage->origin.y - max_radius_xy.y)),
-      Size::Ceil(Size(path_coverage->size.width + max_radius_xy.x * 2,
-                      path_coverage->size.height + max_radius_xy.y * 2)));
+  return Rect(path_coverage->origin - max_radius_xy,
+              Size(path_coverage->size.width + max_radius_xy.x * 2,
+                   path_coverage->size.height + max_radius_xy.y * 2));
 }
 
 static VertexBuffer CreateSolidStrokeVertices(

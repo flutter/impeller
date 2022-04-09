@@ -822,7 +822,8 @@ TEST_F(EntityTest, SolidStrokeCoverageIsCorrect) {
     entity.SetPath(PathBuilder{}.AddLine({0, 0}, {10, 10}).TakePath());
     entity.SetContents(std::move(contents));
     auto actual = entity.GetCoverage();
-    auto expected = Rect::MakeLTRB(-3, -3, 13, 13);
+    auto expected =
+        Rect::MakeLTRB(-sqrt(8), -sqrt(8), 10 + sqrt(8), 10 + sqrt(8));
     ASSERT_TRUE(actual.has_value());
     ASSERT_RECT_NEAR(actual.value(), expected);
   }
