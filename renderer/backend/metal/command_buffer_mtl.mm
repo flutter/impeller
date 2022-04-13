@@ -55,7 +55,7 @@ static CommandBuffer::Status ToCommitResult(MTLCommandBufferStatus status) {
 
 // TODO(dnfield): remove this declaration when we no longer need to build on
 // machines with lower SDK versions than 11.0.s
-#if !defined(MAC_OS_X_VERSION_11_0) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_11_0
+#if !defined(MAC_OS_VERSION_11_0) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_VERSION_11_0
 typedef NS_ENUM(NSInteger, MTLCommandEncoderErrorState) {
   MTLCommandEncoderErrorStateUnknown = 0,
   MTLCommandEncoderErrorStateCompleted = 1,
