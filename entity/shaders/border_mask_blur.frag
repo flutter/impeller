@@ -29,7 +29,7 @@ float erf(float x) {
   return sign(x) * (1 - 1 / (b * b * b * b));
 }
 
-// Normalized indefinite integral of the Gaussian function.
+// Indefinite integral of the Gaussian function (with constant range 0->1).
 float GaussianIntegral(float x, float sigma) {
   return 0.5 + 0.5 * erf(x / sigma);
 }
@@ -49,11 +49,10 @@ void main() {
   float within_bounds =
       float(v_texture_coords.x >= 0 && v_texture_coords.y >= 0 &&
             v_texture_coords.x < 1 && v_texture_coords.y < 1);
-  float inner_mask_factor =
+  float inner_factor =
       (v_inner_blur_factor * blur_factor + v_src_factor) * within_bounds;
-  float outer_mask_factor =
-      v_outer_blur_factor * blur_factor * (1 - within_bounds);
+  float outer_factor = v_outer_blur_factor * blur_factor * (1 - within_bounds);
 
-  float alpha_mask = inner_mask_factor + outer_mask_factor;
-  frag_color = image_color * alpha_mask;
+  float mask_factor = inner_factor + outer_factor;
+  frag_color = image_color * mask_factor;
 }
