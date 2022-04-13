@@ -4,6 +4,7 @@
 
 #include "path_component.h"
 
+#define _USE_MATH_DEFINES
 #include <cmath>
 
 namespace impeller {
