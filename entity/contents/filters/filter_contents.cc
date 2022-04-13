@@ -4,6 +4,7 @@
 
 #include "impeller/entity/contents/filters/filter_contents.h"
 
+#define _USE_MATH_DEFINES
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
