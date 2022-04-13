@@ -742,6 +742,10 @@ TEST_F(EntityTest, GaussianBlurFilter) {
         FilterContents::Sigma{blur_amount[1]},
         blur_styles[selected_blur_style]);
 
+    auto mask_blur = FilterContents::MakeBorderMaskBlur(
+        FilterInput::Make(blend), FilterContents::Sigma{blur_amount[0]},
+        FilterContents::Sigma{blur_amount[1]});
+
     ISize input_size = boston->GetSize();
     auto rect = Rect(-Point(input_size) / 2, Size(input_size));
     auto ctm = Matrix::MakeTranslation(Vector3(offset[0], offset[1])) *
@@ -749,7 +753,7 @@ TEST_F(EntityTest, GaussianBlurFilter) {
                Matrix::MakeScale(Vector2(scale[0], scale[1])) *
                Matrix::MakeSkew(skew[0], skew[1]);
 
-    auto target_contents = blur;
+    auto target_contents = mask_blur;
 
     Entity entity;
     entity.SetPath(PathBuilder{}.AddRect(rect).TakePath());

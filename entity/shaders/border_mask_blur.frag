@@ -55,5 +55,5 @@ void main() {
       v_outer_blur_factor * blur_factor * (1 - within_bounds);
 
   float alpha_mask = inner_mask_factor + outer_mask_factor;
-  frag_color = vec4(image_color.rgb, image_color.a * alpha_mask);
+  frag_color = image_color * alpha_mask;
 }
