@@ -10,7 +10,10 @@ declare_args() {
   impeller_enable_playground = false
 
   # Whether Impeller is supported on the platform.
-  impeller_supports_platform = is_mac || is_ios
+  impeller_supports_platform = is_mac || is_ios || is_linux
+
+  # Whether Impeller shaders are supported on the platform.
+  impeller_shaders_supports_platform = is_mac || is_ios
 }
 
 # ------------------------------------------------------------------------------
@@ -190,84 +193,85 @@ template("impeller_shaders_real") {
       args += [ "--ios" ]
     }
   }
+  if (is_mac || is_ios) {
+    metal_library_target_name = "metal_library_$target_name"
+    metal_library(metal_library_target_name) {
+      name = invoker.name
+      sources = filter_include(get_target_outputs(":$impellerc_target_name"),
+                               [ "*.metal" ])
+      deps = [ ":$impellerc_target_name" ]
+    }
 
-  metal_library_target_name = "metal_library_$target_name"
-  metal_library(metal_library_target_name) {
-    name = invoker.name
-    sources = filter_include(get_target_outputs(":$impellerc_target_name"),
-                             [ "*.metal" ])
-    deps = [ ":$impellerc_target_name" ]
-  }
+    shader_glue_target_name = "glue_$target_name"
+    shader_glue_config_name = "glue_config_$target_name"
 
-  shader_glue_target_name = "glue_$target_name"
-  shader_glue_config_name = "glue_config_$target_name"
+    config(shader_glue_config_name) {
+      impeller_root_gen_dir = get_path_info(
+              get_label_info("//flutter/impeller:impeller", "target_gen_dir"),
+              "dir")
 
-  config(shader_glue_config_name) {
-    impeller_root_gen_dir = get_path_info(
-            get_label_info("//flutter/impeller:impeller", "target_gen_dir"),
-            "dir")
+      # Contains the generated header headers.
+      include_dirs = [
+        target_gen_dir,
+        impeller_root_gen_dir,
+      ]
+    }
 
-    # Contains the generated header headers.
-    include_dirs = [
-      target_gen_dir,
-      impeller_root_gen_dir,
-    ]
-  }
+    source_set(shader_glue_target_name) {
+      public_configs = [ ":$shader_glue_config_name" ]
 
-  source_set(shader_glue_target_name) {
-    public_configs = [ ":$shader_glue_config_name" ]
+      public = filter_include(get_target_outputs(":$impellerc_target_name"),
+                              [ "*.h" ])
+      sources = filter_include(get_target_outputs(":$impellerc_target_name"),
+                               [
+                                 "*.h",
+                                 "*.cc",
+                                 "*.mm",
+                               ])
 
-    public =
-        filter_include(get_target_outputs(":$impellerc_target_name"), [ "*.h" ])
-    sources = filter_include(get_target_outputs(":$impellerc_target_name"),
-                             [
-                               "*.h",
-                               "*.cc",
-                               "*.mm",
-                             ])
+      deps = [
+        ":$impellerc_target_name",
+        "//flutter/impeller/renderer",
+      ]
+    }
 
-    deps = [
-      ":$impellerc_target_name",
-      "//flutter/impeller/renderer",
-    ]
-  }
+    generate_embedder_data_sources = "embedded_data_gen_sources_$target_name"
+    action(generate_embedder_data_sources) {
+      metal_library_files = get_target_outputs(":$metal_library_target_name")
+      metal_library_file = metal_library_files[0]
+      inputs = [ metal_library_file ]
+      output_header = "$target_gen_dir/$base_target_name.h"
+      output_source = "$target_gen_dir/$base_target_name.c"
+      outputs = [
+        output_header,
+        output_source,
+      ]
+      args = [
+        "--symbol-name",
+        base_target_name,
+        "--output-header",
+        rebase_path(output_header),
+        "--output-source",
+        rebase_path(output_source),
+        "--source",
+        rebase_path(metal_library_file),
+      ]
+      script = "//flutter/impeller/tools/xxd.py"
+      deps = [ ":$metal_library_target_name" ]
+    }
 
-  generate_embedder_data_sources = "embedded_data_gen_sources_$target_name"
-  action(generate_embedder_data_sources) {
-    metal_library_files = get_target_outputs(":$metal_library_target_name")
-    metal_library_file = metal_library_files[0]
-    inputs = [ metal_library_file ]
-    output_header = "$target_gen_dir/$base_target_name.h"
-    output_source = "$target_gen_dir/$base_target_name.c"
-    outputs = [
-      output_header,
-      output_source,
-    ]
-    args = [
-      "--symbol-name",
-      base_target_name,
-      "--output-header",
-      rebase_path(output_header),
-      "--output-source",
-      rebase_path(output_source),
-      "--source",
-      rebase_path(metal_library_file),
-    ]
-    script = "//flutter/impeller/tools/xxd.py"
-    deps = [ ":$metal_library_target_name" ]
-  }
+    shader_embedded_data_target_name = "embedded_data_$target_name"
+    source_set(shader_embedded_data_target_name) {
+      sources = get_target_outputs(":$generate_embedder_data_sources")
+      deps = [ ":$generate_embedder_data_sources" ]
+    }
 
-  shader_embedded_data_target_name = "embedded_data_$target_name"
-  source_set(shader_embedded_data_target_name) {
-    sources = get_target_outputs(":$generate_embedder_data_sources")
-    deps = [ ":$generate_embedder_data_sources" ]
-  }
-
-  group(target_name) {
-    public_deps = [
-      ":$shader_embedded_data_target_name",
-      ":$shader_glue_target_name",
-    ]
+    group(target_name) {
+      public_deps = [
+        ":$shader_embedded_data_target_name",
+        ":$shader_glue_target_name",
+      ]
+    }
   }
 }
 
@@ -284,7 +288,7 @@ template("impeller_shaders_real") {
 # @see             impeller_shaders_real
 #
 template("impeller_shaders") {
-  if (impeller_supports_platform) {
+  if (impeller_shaders_supports_platform) {
     impeller_shaders_real(target_name) {
       forward_variables_from(invoker, "*")
     }
