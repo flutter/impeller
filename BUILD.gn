@@ -27,7 +27,7 @@ group("impeller") {
   ]
 
   if (impeller_supports_rendering) {
-    deps += [
+    public_deps += [
       "aiks",
       "display_list",
       "entity",
