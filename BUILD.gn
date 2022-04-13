@@ -14,9 +14,7 @@ config("impeller_public_config") {
   }
 
   if (is_win) {
-    defines += [
-      "_USE_MATH_DEFINES"
-    ]
+    defines += [ "_USE_MATH_DEFINES" ]
   }
 }
 
