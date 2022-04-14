@@ -63,7 +63,10 @@ typedef NS_ENUM(NSInteger, MTLCommandEncoderErrorState) {
   MTLCommandEncoderErrorStatePending = 3,
   MTLCommandEncoderErrorStateFaulted = 4,
 } API_AVAILABLE(macos(11.0), ios(14.0));
+#endif
 
+
+#if !defined(MAC_OS_VERSION_12_0) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_VERSION_12_0
 constexpr int MTLCommandBufferErrorAccessRevoked = 4;
 constexpr int MTLCommandBufferErrorStackOverflow = 12;
 #endif
