@@ -29,9 +29,11 @@ float erf(float x) {
   return sign(x) * (1 - 1 / (b * b * b * b));
 }
 
+const float kHalfSqrtTwo = 0.70710678118;
+
 // Indefinite integral of the Gaussian function (with constant range 0->1).
 float GaussianIntegral(float x, float sigma) {
-  return 0.5 + 0.5 * erf(x / sigma);
+  return 0.5 + 0.5 * erf(x * (kHalfSqrtTwo / sigma));
 }
 
 float BoxBlurMask(vec2 uv) {
