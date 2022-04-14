@@ -115,6 +115,9 @@ std::optional<Rect> BorderMaskBlurFilterContents::GetCoverage(
     return std::nullopt;
   }
 
+  // Technically this works with all of our current filters, but this should be
+  // using the input[0] transform, not the entity transform!
+  // See: https://github.com/flutter/impeller/pull/130#issuecomment-1098892423
   auto transformed_blur_vector =
       entity.GetTransformation()
           .TransformDirection(
