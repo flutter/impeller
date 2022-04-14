@@ -84,7 +84,6 @@ impeller_component("entity_unittests") {
   testonly = true
 
   sources = [
-    "../geometry/geometry_unittests.h",
     "entity_playground.cc",
     "entity_playground.h",
     "entity_unittests.cc",
