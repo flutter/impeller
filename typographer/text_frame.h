@@ -21,8 +21,13 @@ class TextFrame {
 
   ~TextFrame();
 
-  const Rect& GetBounds() const;
-  void SetBounds(Rect bounds);
+  //----------------------------------------------------------------------------
+  /// @brief      The conservative bounding box for this text frame.
+  ///
+  /// @return     The bounds rectangle. If there are no glyphs in this text
+  ///             frame, std::nullopt is returned.
+  ///
+  std::optional<Rect> GetBounds() const;
 
   //----------------------------------------------------------------------------
   /// @brief      The number of runs in this text frame.
@@ -48,7 +53,6 @@ class TextFrame {
   const std::vector<TextRun>& GetRuns() const;
 
  private:
-  Rect bounds_;
   std::vector<TextRun> runs_;
 };
 

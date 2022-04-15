@@ -10,12 +10,19 @@ TextFrame::TextFrame() = default;
 
 TextFrame::~TextFrame() = default;
 
-const Rect& TextFrame::GetBounds() const {
-  return bounds_;
-}
+std::optional<Rect> TextFrame::GetBounds() const {
+  std::optional<Rect> result;
 
-void TextFrame::SetBounds(Rect bounds) {
-  bounds_ = std::move(bounds);
+  for (const auto& run : runs_) {
+    const auto glyph_bounds = run.GetFont().GetMetrics().GetBoundingBox();
+    for (const auto& glyph_position : run.GetGlyphPositions()) {
+      Vector2 position = glyph_position.position * Vector2();
+      Rect glyph_rect = Rect(position + glyph_bounds.origin, glyph_bounds.size);
+      result = result.has_value() ? result->Union(glyph_rect) : glyph_rect;
+    }
+  }
+
+  return result;
 }
 
 bool TextFrame::AddTextRun(TextRun run) {

@@ -36,10 +36,6 @@ TextFrame TextFrameFromTextBlob(sk_sp<SkTextBlob> blob, Scalar scale) {
 
   TextFrame frame;
 
-  auto bounds = blob->bounds();
-  frame.SetBounds(
-      Rect(bounds.x(), bounds.y(), bounds.width(), bounds.height()));
-
   for (SkTextBlobRunIterator run(blob.get()); !run.done(); run.next()) {
     TextRun text_run(ToFont(run.font(), scale));
     const auto glyph_count = run.glyphCount();
