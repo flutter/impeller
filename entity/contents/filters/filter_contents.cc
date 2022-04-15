@@ -52,7 +52,8 @@ std::shared_ptr<FilterContents> FilterContents::MakeBlend(
       new_blend->SetInputs({blend_input, *in_i});
       new_blend->SetBlendMode(blend_mode);
       if (in_i < inputs.end() - 1) {
-        blend_input = FilterInput::Make(new_blend);
+        blend_input = FilterInput::Make(
+            std::static_pointer_cast<FilterContents>(new_blend));
       }
     }
     // new_blend will always be assigned because inputs.size() >= 2.
@@ -109,6 +110,17 @@ void FilterContents::SetInputs(FilterInput::Vector inputs) {
   inputs_ = std::move(inputs);
 }
 
+const FilterInput::Vector& FilterContents::GetInputs() const {
+  return inputs_;
+}
+
+FilterInput::Ref FilterContents::GetInput(size_t index) const {
+  if (index >= inputs_.size()) {
+    return nullptr;
+  }
+  return inputs_[index];
+}
+
 bool FilterContents::Render(const ContentContext& renderer,
                             const Entity& entity,
                             RenderPass& pass) const {
@@ -162,6 +174,9 @@ std::optional<Rect> FilterContents::GetCoverage(const Entity& entity) const {
   return result;
 }
 
+std::optional<Rect> FilterContents::GetFilterCoverage(
+    const Matrix& transform) const {}
+
 std::optional<Snapshot> FilterContents::RenderToSnapshot(
     const ContentContext& renderer,
     const Entity& entity) const {
@@ -183,6 +198,10 @@ std::optional<Snapshot> FilterContents::RenderToSnapshot(
 
   return Snapshot{.texture = texture,
                   .transform = Matrix::MakeTranslation(bounds->origin)};
+}
+
+Matrix FilterContents::GetLocalTransform() const {
+  return Matrix();
 }
 
 }  // namespace impeller

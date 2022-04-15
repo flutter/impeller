@@ -113,6 +113,10 @@ class FilterContents : public Contents {
   ///        particular filter's implementation.
   void SetInputs(FilterInput::Vector inputs);
 
+  const FilterInput::Vector& GetInputs() const;
+
+  FilterInput::Ref GetInput(size_t index) const;
+
   // |Contents|
   bool Render(const ContentContext& renderer,
               const Entity& entity,
@@ -122,9 +126,10 @@ class FilterContents : public Contents {
   std::optional<Rect> GetCoverage(const Entity& entity) const override;
 
   // |Contents|
-  virtual std::optional<Snapshot> RenderToSnapshot(
-      const ContentContext& renderer,
-      const Entity& entity) const override;
+  std::optional<Snapshot> RenderToSnapshot(const ContentContext& renderer,
+                                           const Entity& entity) const override;
+
+  virtual Matrix GetLocalTransform() const;
 
  private:
   /// @brief Takes a set of zero or more input textures and writes to an output
@@ -135,8 +140,9 @@ class FilterContents : public Contents {
                             RenderPass& pass,
                             const Rect& bounds) const = 0;
 
+  virtual std::optional<Rect> GetFilterCoverage(const Matrix& transform) const;
+
   FilterInput::Vector inputs_;
-  Rect destination_;
 
   FML_DISALLOW_COPY_AND_ASSIGN(FilterContents);
 };
