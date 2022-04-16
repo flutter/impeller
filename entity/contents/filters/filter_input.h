@@ -53,7 +53,7 @@ class FilterInput {
 
   virtual std::optional<Rect> GetCoverage(const Entity& entity) const = 0;
 
-  virtual Matrix GetLocalTransform() const;
+  virtual Matrix GetLocalTransform(const Entity& entity) const;
 
   virtual Matrix GetTransform(const Entity& entity) const;
 };
@@ -77,7 +77,10 @@ class FilterContentsFilterInput final : public FilterInput {
   std::optional<Rect> GetCoverage(const Entity& entity) const override;
 
   // |FilterInput|
-  Matrix GetLocalTransform() const override;
+  Matrix GetLocalTransform(const Entity& entity) const override;
+
+  // |FilterInput|
+  Matrix GetTransform(const Entity& entity) const override;
 
  private:
   FilterContentsFilterInput(std::shared_ptr<FilterContents> filter);
@@ -132,6 +135,9 @@ class TextureFilterInput final : public FilterInput {
 
   // |FilterInput|
   std::optional<Rect> GetCoverage(const Entity& entity) const override;
+
+  // |FilterInput|
+  Matrix GetLocalTransform(const Entity& entity) const override;
 
  private:
   TextureFilterInput(std::shared_ptr<Texture> texture);

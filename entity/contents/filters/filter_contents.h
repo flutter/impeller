@@ -113,10 +113,6 @@ class FilterContents : public Contents {
   ///        particular filter's implementation.
   void SetInputs(FilterInput::Vector inputs);
 
-  const FilterInput::Vector& GetInputs() const;
-
-  FilterInput::Ref GetInput(size_t index) const;
-
   // |Contents|
   bool Render(const ContentContext& renderer,
               const Entity& entity,
@@ -131,20 +127,26 @@ class FilterContents : public Contents {
 
   virtual Matrix GetLocalTransform() const;
 
+  Matrix GetTransform(const Matrix& parent_transform) const;
+
  private:
-  /// @brief Takes a set of zero or more input textures and writes to an output
-  ///        texture.
+  virtual std::optional<Rect> GetFilterCoverage(
+      const FilterInput::Vector& inputs,
+      const Entity& entity) const;
+
+  /// @brief  Takes a set of zero or more input textures and writes to an output
+  ///         texture.
   virtual bool RenderFilter(const FilterInput::Vector& inputs,
                             const ContentContext& renderer,
                             const Entity& entity,
                             RenderPass& pass,
-                            const Rect& bounds) const = 0;
-
-  virtual std::optional<Rect> GetFilterCoverage(const Matrix& transform) const;
+                            const Rect& coverage) const = 0;
 
   FilterInput::Vector inputs_;
 
   FML_DISALLOW_COPY_AND_ASSIGN(FilterContents);
+
+  friend FilterContentsFilterInput;
 };
 
 }  // namespace impeller

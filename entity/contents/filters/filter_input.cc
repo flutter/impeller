@@ -51,12 +51,12 @@ FilterInput::Vector FilterInput::Make(std::initializer_list<Variant> inputs) {
   return result;
 }
 
-Matrix FilterInput::GetLocalTransform() const {
+Matrix FilterInput::GetLocalTransform(const Entity& entity) const {
   return Matrix();
 }
 
 Matrix FilterInput::GetTransform(const Entity& entity) const {
-  return entity.GetTransformation() * GetLocalTransform();
+  return entity.GetTransformation() * GetLocalTransform(entity);
 }
 
 FilterInput::~FilterInput() = default;
@@ -89,8 +89,13 @@ std::optional<Rect> FilterContentsFilterInput::GetCoverage(
   return filter_->GetCoverage(entity);
 }
 
-Matrix FilterContentsFilterInput::GetLocalTransform() const {
+Matrix FilterContentsFilterInput::GetLocalTransform(
+    const Entity& entity) const {
   return filter_->GetLocalTransform();
+}
+
+Matrix FilterContentsFilterInput::GetTransform(const Entity& entity) const {
+  return filter_->GetTransform(entity.GetTransformation());
 }
 
 /*******************************************************************************
@@ -141,8 +146,23 @@ std::optional<Snapshot> TextureFilterInput::GetSnapshot(
 
 std::optional<Rect> TextureFilterInput::GetCoverage(
     const Entity& entity) const {
+  auto path_bounds = entity.GetPath().GetBoundingBox();
+  if (!path_bounds.has_value()) {
+    return std::nullopt;
+  }
   return Rect::MakeSize(Size(texture_->GetSize()))
       .TransformBounds(GetTransform(entity));
+}
+
+Matrix TextureFilterInput::GetLocalTransform(const Entity& entity) const {
+  // Compute the local transform such that the texture will cover the entity
+  // path bounding box.
+  auto path_bounds = entity.GetPath().GetBoundingBox();
+  if (!path_bounds.has_value()) {
+    return Matrix();
+  }
+  return Matrix::MakeTranslation(path_bounds->origin) *
+         Matrix::MakeScale(Vector2(path_bounds->size) / texture_->GetSize());
 }
 
 }  // namespace impeller

@@ -110,17 +110,6 @@ void FilterContents::SetInputs(FilterInput::Vector inputs) {
   inputs_ = std::move(inputs);
 }
 
-const FilterInput::Vector& FilterContents::GetInputs() const {
-  return inputs_;
-}
-
-FilterInput::Ref FilterContents::GetInput(size_t index) const {
-  if (index >= inputs_.size()) {
-    return nullptr;
-  }
-  return inputs_[index];
-}
-
 bool FilterContents::Render(const ContentContext& renderer,
                             const Entity& entity,
                             RenderPass& pass) const {
@@ -151,6 +140,14 @@ bool FilterContents::Render(const ContentContext& renderer,
 }
 
 std::optional<Rect> FilterContents::GetCoverage(const Entity& entity) const {
+  auto entity_with_local_transform =
+      entity.WithTransform(GetTransform(entity.GetTransformation()));
+  return GetFilterCoverage(inputs_, entity_with_local_transform);
+}
+
+std::optional<Rect> FilterContents::GetFilterCoverage(
+    const FilterInput::Vector& inputs,
+    const Entity& entity) const {
   // The default coverage of FilterContents is just the union of its inputs'
   // coverage. FilterContents implementations may choose to adjust this
   // coverage depending on the use case.
@@ -160,7 +157,7 @@ std::optional<Rect> FilterContents::GetCoverage(const Entity& entity) const {
   }
 
   std::optional<Rect> result;
-  for (const auto& input : inputs_) {
+  for (const auto& input : inputs) {
     auto coverage = input->GetCoverage(entity);
     if (!coverage.has_value()) {
       continue;
@@ -174,22 +171,23 @@ std::optional<Rect> FilterContents::GetCoverage(const Entity& entity) const {
   return result;
 }
 
-std::optional<Rect> FilterContents::GetFilterCoverage(
-    const Matrix& transform) const {}
-
 std::optional<Snapshot> FilterContents::RenderToSnapshot(
     const ContentContext& renderer,
     const Entity& entity) const {
-  auto bounds = GetCoverage(entity);
-  if (!bounds.has_value() || bounds->IsEmpty()) {
+  auto entity_with_local_transform =
+      entity.WithTransform(GetTransform(entity.GetTransformation()));
+
+  auto coverage = GetFilterCoverage(inputs_, entity_with_local_transform);
+  if (!coverage.has_value() || coverage->IsEmpty()) {
     return std::nullopt;
   }
 
   // Render the filter into a new texture.
   auto texture = renderer.MakeSubpass(
-      ISize(bounds->size),
+      ISize(coverage->size),
       [=](const ContentContext& renderer, RenderPass& pass) -> bool {
-        return RenderFilter(inputs_, renderer, entity, pass, bounds.value());
+        return RenderFilter(inputs_, renderer, entity_with_local_transform,
+                            pass, coverage.value());
       });
 
   if (!texture) {
@@ -197,11 +195,15 @@ std::optional<Snapshot> FilterContents::RenderToSnapshot(
   }
 
   return Snapshot{.texture = texture,
-                  .transform = Matrix::MakeTranslation(bounds->origin)};
+                  .transform = Matrix::MakeTranslation(coverage->origin)};
 }
 
 Matrix FilterContents::GetLocalTransform() const {
   return Matrix();
+}
+
+Matrix FilterContents::GetTransform(const Matrix& parent_transform) const {
+  return parent_transform * GetLocalTransform();
 }
 
 }  // namespace impeller
