@@ -295,7 +295,7 @@ void Canvas::DrawTextFrame(TextFrame text_frame, Point position, Paint paint) {
   entity.SetPath({});
   entity.SetStencilDepth(GetStencilDepth());
   entity.SetBlendMode(paint.blend_mode);
-  entity.SetContents(std::move(text_contents));
+  entity.SetContents(paint.WithFilters(std::move(text_contents)));
 
   GetCurrentPass().AddEntity(std::move(entity));
 }

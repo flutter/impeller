@@ -180,6 +180,7 @@ TEST_F(DisplayListTest, CanDrawWithMaskBlur) {
   auto texture = CreateTextureForFixture("embarcadero.jpg");
   flutter::DisplayListBuilder builder;
 
+  // Mask blurred image.
   {
     auto filter = flutter::DlBlurMaskFilter(kNormal_SkBlurStyle, 10.0f);
     builder.setMaskFilter(&filter);
@@ -187,11 +188,18 @@ TEST_F(DisplayListTest, CanDrawWithMaskBlur) {
                       SkSamplingOptions{}, true);
   }
 
+  // Mask blurred filled path.
   {
     builder.setColor(SK_ColorYELLOW);
     auto filter = flutter::DlBlurMaskFilter(kOuter_SkBlurStyle, 10.0f);
     builder.setMaskFilter(&filter);
     builder.drawArc(SkRect::MakeXYWH(410, 110, 100, 100), 45, 270, true);
+  }
+
+  // Mask blurred text.
+  {
+    builder.drawTextBlob(
+        SkTextBlob::MakeFromString("Testing", CreateTestFont()), 220, 170);
   }
 
   ASSERT_TRUE(OpenPlaygroundHere(builder.Build()));
