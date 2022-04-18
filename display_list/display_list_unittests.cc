@@ -2,12 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "display_list/display_list_mask_filter.h"
 #include "gtest/gtest.h"
+#include "include/core/SkBlurTypes.h"
 #include "third_party/imgui/imgui.h"
 #include "third_party/skia/include/core/SkColor.h"
 #include "third_party/skia/include/core/SkPathBuilder.h"
 
 #include "flutter/display_list/display_list_builder.h"
+#include "flutter/display_list/types.h"
 #include "flutter/testing/testing.h"
 #include "impeller/display_list/display_list_image_impeller.h"
 #include "impeller/display_list/display_list_playground.h"
@@ -168,6 +171,27 @@ TEST_F(DisplayListTest, StrokedPathsDrawCorrectly) {
     path.lineTo({100, 0});
     path.lineTo({100, 0});
     builder.drawPath(path);
+  }
+
+  ASSERT_TRUE(OpenPlaygroundHere(builder.Build()));
+}
+
+TEST_F(DisplayListTest, CanDrawWithMaskBlur) {
+  auto texture = CreateTextureForFixture("embarcadero.jpg");
+  flutter::DisplayListBuilder builder;
+
+  {
+    auto filter = flutter::DlBlurMaskFilter(kNormal_SkBlurStyle, 10.0f);
+    builder.setMaskFilter(&filter);
+    builder.drawImage(DlImageImpeller::Make(texture), SkPoint::Make(100, 100),
+                      SkSamplingOptions{}, true);
+  }
+
+  {
+    builder.setColor(SK_ColorYELLOW);
+    auto filter = flutter::DlBlurMaskFilter(kOuter_SkBlurStyle, 10.0f);
+    builder.setMaskFilter(&filter);
+    builder.drawArc(SkRect::MakeXYWH(410, 110, 100, 100), 45, 270, true);
   }
 
   ASSERT_TRUE(OpenPlaygroundHere(builder.Build()));
