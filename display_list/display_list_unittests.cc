@@ -198,6 +198,8 @@ TEST_F(DisplayListTest, CanDrawWithMaskBlur) {
 
   // Mask blurred text.
   {
+    auto filter = flutter::DlBlurMaskFilter(kSolid_SkBlurStyle, 10.0f);
+    builder.setMaskFilter(&filter);
     builder.drawTextBlob(
         SkTextBlob::MakeFromString("Testing", CreateTestFont()), 220, 170);
   }
