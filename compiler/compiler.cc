@@ -419,7 +419,7 @@ std::string Compiler::EntryPointFromSourceName(const std::string& file_name,
                                                SourceType type) {
   std::stringstream stream;
   std::filesystem::path file_path(file_name);
-  stream << file_path.stem().native() << "_";
+  stream << ToUTf8(file_path.stem().native()) << "_";
   switch (type) {
     case SourceType::kUnknown:
       stream << "unknown";

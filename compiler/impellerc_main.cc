@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <codecvt>
 #include <filesystem>
 
 #include "flutter/fml/command_line.h"
@@ -50,9 +51,9 @@ bool Main(const fml::CommandLine& command_line) {
   reflector_options.shader_name =
       InferShaderNameFromPath(switches.source_file_name);
   reflector_options.header_file_name =
-      std::filesystem::path{switches.reflection_header_name}
-          .filename()
-          .native();
+      ToUtf8(std::filesystem::path{switches.reflection_header_name}
+                 .filename()
+                 .native());
 
   Compiler compiler(*source_file_mapping, options, reflector_options);
   if (!compiler.IsValid()) {
