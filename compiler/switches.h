@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <codecvt>
 #include <iostream>
 #include <memory>
 
@@ -13,6 +12,7 @@
 #include "flutter/fml/unique_fd.h"
 #include "impeller/compiler/compiler.h"
 #include "impeller/compiler/include_dir.h"
+#include "impeller/compiler/types.h"
 
 namespace impeller {
 namespace compiler {
@@ -39,15 +39,6 @@ struct Switches {
 
   static void PrintHelp(std::ostream& stream);
 };
-
-std::string ToUtf8(const std::wstring& wstring) {
-  std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-  return myconv.to_bytes(wstring);
-}
-
-std::string ToUtf8(const std::string& string) {
-  return string;
-}
 
 }  // namespace compiler
 }  // namespace impeller
