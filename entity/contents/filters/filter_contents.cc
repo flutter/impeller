@@ -166,7 +166,7 @@ std::optional<Rect> FilterContents::GetFilterCoverage(
       result = coverage;
       continue;
     }
-    result = result->Union(result.value());
+    result = result->Union(coverage.value());
   }
   return result;
 }
