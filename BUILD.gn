@@ -21,7 +21,7 @@ config("impeller_public_config") {
     defines += [
       "_USE_MATH_DEFINES",
       # TODO(dnfield): https://github.com/flutter/flutter/issues/50053
-      "_CXX17_DEPRECATE_CODECVT_HEADER",
+      "_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING",
     ]
   }
 }
