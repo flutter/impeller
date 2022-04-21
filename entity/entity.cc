@@ -16,12 +16,6 @@ Entity::Entity() = default;
 
 Entity::~Entity() = default;
 
-Entity Entity::WithTransform(const Matrix& transform) const {
-  Entity entity = *this;
-  entity.SetTransformation(transform);
-  return entity;
-}
-
 const Matrix& Entity::GetTransformation() const {
   return transformation_;
 }

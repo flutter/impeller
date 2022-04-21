@@ -57,9 +57,6 @@ class Entity {
 
   ~Entity();
 
-  /// @brief  Make a copy of this entity, but with a different transform.
-  Entity WithTransform(const Matrix& transform) const;
-
   const Matrix& GetTransformation() const;
 
   void SetTransformation(const Matrix& transformation);

@@ -24,11 +24,10 @@ class FilterContents;
  ******************************************************************************/
 
 /// `FilterInput` is a lazy/single eval `Snapshot` which may be shared across
-/// filter parameters and used to evaluate input bounds.
+/// filter parameters and used to evaluate input coverage.
 ///
-/// A `FilterInput` can be created from either a `Texture` or any `Contents`
-/// class (including `FilterContents`), and can be re-used for any filter inputs
-/// across an entity's filter graph without repeating subpasses unnecessarily.
+/// A `FilterInput` can be re-used for any filter inputs across an entity's
+/// filter graph without repeating subpasses unnecessarily.
 ///
 /// Filters may decide to not evaluate inputs in situations where they won't
 /// contribute to the filter's output texture.
@@ -53,8 +52,12 @@ class FilterInput {
 
   virtual std::optional<Rect> GetCoverage(const Entity& entity) const = 0;
 
+  /// @brief  Get the local transform of this filter input. This transform is
+  ///         relative to the `Entity` transform space.
   virtual Matrix GetLocalTransform(const Entity& entity) const;
 
+  /// @brief  Get the transform of this `FilterInput`. This is equivalent to
+  ///         calling `entity.GetTransformation() * GetLocalTransform()`.
   virtual Matrix GetTransform(const Entity& entity) const;
 };
 

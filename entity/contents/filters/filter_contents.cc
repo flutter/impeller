@@ -140,8 +140,9 @@ bool FilterContents::Render(const ContentContext& renderer,
 }
 
 std::optional<Rect> FilterContents::GetCoverage(const Entity& entity) const {
-  auto entity_with_local_transform =
-      entity.WithTransform(GetTransform(entity.GetTransformation()));
+  Entity entity_with_local_transform = entity;
+  entity_with_local_transform.SetTransformation(
+      GetTransform(entity.GetTransformation()));
   return GetFilterCoverage(inputs_, entity_with_local_transform);
 }
 
@@ -174,8 +175,9 @@ std::optional<Rect> FilterContents::GetFilterCoverage(
 std::optional<Snapshot> FilterContents::RenderToSnapshot(
     const ContentContext& renderer,
     const Entity& entity) const {
-  auto entity_with_local_transform =
-      entity.WithTransform(GetTransform(entity.GetTransformation()));
+  Entity entity_with_local_transform = entity;
+  entity_with_local_transform.SetTransformation(
+      GetTransform(entity.GetTransformation()));
 
   auto coverage = GetFilterCoverage(inputs_, entity_with_local_transform);
   if (!coverage.has_value() || coverage->IsEmpty()) {
