@@ -46,7 +46,8 @@ std::unique_ptr<Surface> SurfaceMTL::WrapCurrentMetalLayerDrawable(
   color0_tex_desc.size = {
       static_cast<ISize::Type>(current_drawable.texture.width),
       static_cast<ISize::Type>(current_drawable.texture.height)};
-  color0_tex_desc.usage = static_cast<uint64_t>(TextureUsage::kRenderTarget);
+  color0_tex_desc.usage = static_cast<uint64_t>(TextureUsage::kRenderTarget) |
+                          static_cast<uint64_t>(TextureUsage::kShaderRead);
 
   auto msaa_tex = context->GetPermanentsAllocator()->CreateTexture(
       StorageMode::kDeviceTransient, color0_tex_desc);
@@ -61,7 +62,8 @@ std::unique_ptr<Surface> SurfaceMTL::WrapCurrentMetalLayerDrawable(
   color0_resolve_tex_desc.format = color_format;
   color0_resolve_tex_desc.size = color0_tex_desc.size;
   color0_resolve_tex_desc.usage =
-      static_cast<uint64_t>(TextureUsage::kRenderTarget);
+      static_cast<uint64_t>(TextureUsage::kRenderTarget) |
+      static_cast<uint64_t>(TextureUsage::kShaderRead);
 
   ColorAttachment color0;
   color0.texture = msaa_tex;

@@ -8,6 +8,7 @@
 
 #include "impeller/base/validation.h"
 #include "impeller/entity/contents/content_context.h"
+#include "impeller/entity/contents/filters/filter_contents.h"
 #include "impeller/renderer/render_pass.h"
 
 namespace impeller {
@@ -61,10 +62,6 @@ void Entity::IncrementStencilDepth(uint32_t increment) {
 }
 
 void Entity::SetBlendMode(BlendMode blend_mode) {
-  if (blend_mode_ > BlendMode::kLastPipelineBlendMode) {
-    VALIDATION_LOG << "Non-pipeline blend modes are not supported by the "
-                      "entity blend mode setting.";
-  }
   blend_mode_ = blend_mode;
 }
 
@@ -76,6 +73,22 @@ bool Entity::Render(const ContentContext& renderer,
                     RenderPass& parent_pass) const {
   if (!contents_) {
     return true;
+  }
+
+  if (blend_mode_ > BlendMode::kLastPipelineBlendMode) {
+    auto attachments = parent_pass.GetRenderTarget().GetColorAttachments();
+    auto color0 = attachments.find(0u);
+    auto tex = color0->second.resolve_texture;
+    FML_LOG(ERROR) << "Texture usage: " << tex->GetTextureDescriptor().usage;
+
+    auto blend = FilterContents::MakeBlend(blend_mode_, FilterInput::Make({
+                                                            contents_,
+                                                            tex,
+                                                        }));
+
+    Entity e = *this;
+    e.SetBlendMode(BlendMode::kSource);
+    return blend->Render(renderer, e, parent_pass);
   }
 
   return contents_->Render(renderer, *this, parent_pass);
