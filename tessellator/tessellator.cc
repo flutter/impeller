@@ -53,7 +53,7 @@ Tessellator::Result Tessellator::Tessellate(FillType fill_type,
       DestroyTessellator);
 
   if (!tessellator) {
-    return Result::kFatalError;
+    return Result::kTessellationError;
   }
 
   constexpr int kVertexSize = 2;
@@ -89,7 +89,7 @@ Tessellator::Result Tessellator::Tessellate(FillType fill_type,
   );
 
   if (result != 1) {
-    return Result::kFatalError;
+    return Result::kTessellationError;
   }
 
   // TODO(csg): This copy can be elided entirely for the current use case.

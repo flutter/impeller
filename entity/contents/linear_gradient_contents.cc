@@ -63,7 +63,7 @@ bool LinearGradientContents::Render(const ContentContext& renderer,
                                    vertices_builder.AppendVertex(vtx);
                                  });
 
-    if (result == Tessellator::Result::kFatalError) {
+    if (result == Tessellator::Result::kTessellationError) {
       return false;
     }
     return true;

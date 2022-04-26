@@ -29,7 +29,7 @@ class Tessellator {
   enum class Result {
     kSuccess,
     kInputError,
-    kFatalError,
+    kTessellationError,
   };
 
   Tessellator();
