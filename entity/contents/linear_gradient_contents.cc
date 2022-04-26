@@ -59,7 +59,7 @@ bool LinearGradientContents::Render(const ContentContext& renderer,
                                    vertices_builder.AppendVertex(vtx);
                                  });
     if (!result) {
-      return false;
+      return true;
     }
   }
 

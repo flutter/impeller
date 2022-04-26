@@ -82,7 +82,7 @@ bool TextureContents::Render(const ContentContext& renderer,
           vertex_builder.AppendVertex(data);
         });
     if (!tess_result) {
-      return false;
+      return true;
     }
   }
 
