@@ -47,6 +47,7 @@ class SolidColorContents final : public Contents {
               RenderPass& pass) const override;
 
  private:
+  bool path_set_ = false;
   Path path_;
   bool cover_ = false;
 

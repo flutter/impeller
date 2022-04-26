@@ -4,6 +4,7 @@
 
 #include "linear_gradient_contents.h"
 
+#include "flutter/fml/logging.h"
 #include "impeller/entity/contents/content_context.h"
 #include "impeller/entity/entity.h"
 #include "impeller/renderer/render_pass.h"
@@ -16,6 +17,7 @@ LinearGradientContents::LinearGradientContents() = default;
 LinearGradientContents::~LinearGradientContents() = default;
 
 void LinearGradientContents::SetPath(Path path) {
+  path_set_ = true;
   path_ = std::move(path);
 }
 
@@ -46,6 +48,8 @@ std::optional<Rect> LinearGradientContents::GetCoverage(
 bool LinearGradientContents::Render(const ContentContext& renderer,
                                     const Entity& entity,
                                     RenderPass& pass) const {
+  FML_DCHECK(path_set_) << "Render was called without setting a path.";
+
   using VS = GradientFillPipeline::VertexShader;
   using FS = GradientFillPipeline::FragmentShader;
 

@@ -39,6 +39,7 @@ class LinearGradientContents final : public Contents {
   const std::vector<Color>& GetColors() const;
 
  private:
+  bool path_set_ = false;
   Path path_;
   Point start_point_;
   Point end_point_;

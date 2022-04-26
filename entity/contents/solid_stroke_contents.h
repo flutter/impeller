@@ -79,6 +79,7 @@ class SolidStrokeContents final : public Contents {
               RenderPass& pass) const override;
 
  private:
+  bool path_set_ = false;
   Path path_;
 
   Color color_;
