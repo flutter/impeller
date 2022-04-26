@@ -82,10 +82,12 @@ bool TextureContents::Render(const ContentContext& renderer,
           vertex_builder.AppendVertex(data);
         });
 
+    if (tess_result == Tessellator::Result::kInputError) {
+      return true;
+    }
     if (tess_result == Tessellator::Result::kTessellationError) {
       return false;
     }
-    return true;
   }
 
   if (!vertex_builder.HasVertices()) {

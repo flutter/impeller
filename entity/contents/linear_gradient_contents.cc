@@ -60,10 +60,12 @@ bool LinearGradientContents::Render(const ContentContext& renderer,
                                    vertices_builder.AppendVertex(vtx);
                                  });
 
+    if (result == Tessellator::Result::kInputError) {
+      return true;
+    }
     if (result == Tessellator::Result::kTessellationError) {
       return false;
     }
-    return true;
   }
 
   VS::FrameInfo frame_info;
