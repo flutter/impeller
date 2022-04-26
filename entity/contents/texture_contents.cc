@@ -19,6 +19,7 @@ TextureContents::TextureContents() = default;
 TextureContents::~TextureContents() = default;
 
 void TextureContents::SetPath(Path path) {
+  path_set_ = true;
   path_ = std::move(path);
 }
 
@@ -41,6 +42,8 @@ std::optional<Rect> TextureContents::GetCoverage(const Entity& entity) const {
 bool TextureContents::Render(const ContentContext& renderer,
                              const Entity& entity,
                              RenderPass& pass) const {
+  FML_DCHECK(path_set_) << "Render was called without setting a path.";
+
   if (texture_ == nullptr) {
     return true;
   }
