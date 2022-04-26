@@ -58,9 +58,11 @@ bool LinearGradientContents::Render(const ContentContext& renderer,
                                    vtx.vertices = point;
                                    vertices_builder.AppendVertex(vtx);
                                  });
-    if (!result) {
-      return true;
+
+    if (result == Tessellator::Result::kFatalError) {
+      return false;
     }
+    return true;
   }
 
   VS::FrameInfo frame_info;
