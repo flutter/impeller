@@ -48,7 +48,6 @@ class TextureContents final : public Contents {
               RenderPass& pass) const override;
 
  public:
-  bool path_set_ = false;
   Path path_;
 
   std::shared_ptr<Texture> texture_;

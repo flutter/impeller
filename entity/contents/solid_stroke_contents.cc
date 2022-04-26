@@ -30,7 +30,6 @@ const Color& SolidStrokeContents::GetColor() const {
 }
 
 void SolidStrokeContents::SetPath(Path path) {
-  path_set_ = true;
   path_ = std::move(path);
 }
 
@@ -174,8 +173,6 @@ static VertexBuffer CreateSolidStrokeVertices(
 bool SolidStrokeContents::Render(const ContentContext& renderer,
                                  const Entity& entity,
                                  RenderPass& pass) const {
-  FML_DCHECK(path_set_) << "Render was called without setting a path.";
-
   if (color_.IsTransparent() || stroke_size_ <= 0.0) {
     return true;
   }

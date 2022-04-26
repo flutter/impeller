@@ -26,7 +26,6 @@ const Color& SolidColorContents::GetColor() const {
 }
 
 void SolidColorContents::SetPath(Path path) {
-  path_set_ = true;
   path_ = std::move(path);
 }
 
@@ -61,8 +60,6 @@ VertexBuffer SolidColorContents::CreateSolidFillVertices(const Path& path,
 bool SolidColorContents::Render(const ContentContext& renderer,
                                 const Entity& entity,
                                 RenderPass& pass) const {
-  FML_DCHECK(path_set_) << "Render was called without setting a path.";
-
   if (color_.IsTransparent()) {
     return true;
   }
